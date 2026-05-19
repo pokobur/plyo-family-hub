@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #ff7e67;
+  --color-primary-dark: #e06c57;
+  --color-secondary: #ffc107;
+  --color-accent: #a1c4fd;
+  --color-accent-dark: #c2e9fb;
+  --color-card: rgba(255, 255, 255, 0.95);
+  
+  --font-sans: var(--font-mplus), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #fdfdfd;
+  --foreground: #333333;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  background: var(--color-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease-out;
+}
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
 }
