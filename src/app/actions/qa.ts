@@ -12,7 +12,7 @@ const QAFormSchema = z.object({
   category: z.string().min(1, "カテゴリを選択してください"),
 })
 
-export async function createQuestion(prevState: any, formData: FormData) {
+export async function createQuestion(prevState: unknown, formData: FormData) {
   const supabase = await createClient()
 
   const rawData = {

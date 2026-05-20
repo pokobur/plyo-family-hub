@@ -1,5 +1,5 @@
 import AffiliateProductCard from "@/components/shared/AffiliateProductCard";
-import { Plus, Search, Heart, ShieldCheck } from "lucide-react";
+import { Plus, Search, Heart } from "lucide-react";
 import Link from "next/link";
 import { getItems } from "@/app/actions/items";
 
@@ -71,7 +71,7 @@ export default async function ItemsPage() {
                 title={item.title}
                 description={item.description}
                 imageUrl={item.image_url || "https://images.unsplash.com/photo-1584824486516-0555a07fc511?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"}
-                platform={item.platform as any}
+                platform={item.platform as "Amazon" | "楽天" | "plyo.blog"}
                 url={item.affiliate_url || item.original_url}
                 rating={item.rating}
               />

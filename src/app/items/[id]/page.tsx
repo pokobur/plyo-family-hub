@@ -1,6 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 import { Star, ExternalLink, Heart, MessageSquare, ArrowLeft, ShieldCheck, Share2 } from "lucide-react";
 import Link from "next/link";
-import AffiliateProductCard from "@/components/shared/AffiliateProductCard";
 import { getItem } from "@/app/actions/items";
 import { notFound } from "next/navigation";
 

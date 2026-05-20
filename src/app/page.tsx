@@ -113,7 +113,7 @@ export default async function Home() {
                       title={item.title}
                       description={item.description}
                       imageUrl={item.image_url || "https://images.unsplash.com/photo-1584824486516-0555a07fc511?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"}
-                      platform={item.platform as any}
+                      platform={item.platform as "Amazon" | "楽天" | "plyo.blog"}
                       url={item.affiliate_url || item.original_url}
                       rating={item.rating}
                     />

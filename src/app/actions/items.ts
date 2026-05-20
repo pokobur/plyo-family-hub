@@ -13,7 +13,7 @@ const ItemFormSchema = z.object({
   description: z.string().min(10, "おすすめの理由は10文字以上必要です").max(2000, "2000文字以内で入力してください"),
 })
 
-export async function createItem(prevState: any, formData: FormData) {
+export async function createItem(prevState: unknown, formData: FormData) {
   const supabase = await createClient()
 
   const rawData = {

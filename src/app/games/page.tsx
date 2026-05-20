@@ -1,4 +1,4 @@
-import { Gamepad2, Sparkles, Trophy, Flame } from "lucide-react";
+import { Gamepad2, Sparkles, Flame } from "lucide-react";
 import Link from "next/link";
 
 export default function GamesPage() {

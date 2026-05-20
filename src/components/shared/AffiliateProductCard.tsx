@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { ExternalLink, Star } from "lucide-react";
 
 interface AffiliateProductCardProps {
