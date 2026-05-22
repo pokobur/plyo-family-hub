@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react";
-import { Settings, X, Shield, Check, Trash2, Key, User as UserIcon, LogIn, LogOut } from "lucide-react";
+import { Settings, X, Shield, Check, Trash2, Key, User as UserIcon, LogIn, LogOut, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SettingsButton() {
@@ -149,7 +149,25 @@ export default function SettingsButton() {
           
           {/* Section 1: User Account */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">アカウント</h3>
+            {user ? (
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">アカウント</h3>
+            ) : (
+              <a
+                href={`/login?next=${encodeURIComponent(currentPath)}`}
+                onClick={() => setIsOpen(false)}
+                className="text-xs font-bold text-gray-600 hover:text-primary uppercase tracking-wider flex items-center justify-between transition-colors group cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">
+                  アカウント
+                  <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-normal normal-case">
+                    未ログイン
+                  </span>
+                </span>
+                <span className="text-[10px] text-gray-400 group-hover:text-primary transition-colors flex items-center gap-0.5 font-normal normal-case">
+                  ログインはこちら <ChevronRight size={12} />
+                </span>
+              </a>
+            )}
             {user ? (
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
