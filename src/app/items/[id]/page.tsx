@@ -83,7 +83,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
                 rel="noopener noreferrer"
                 className={`w-full py-4 rounded-xl font-black text-center shadow-lg hover-lift transition-all flex justify-center items-center gap-2 ${platformStyles[platformKey as keyof typeof platformStyles]}`}
               >
-                {itemData.platform} で詳細を見る <ExternalLink size={18} />
+                {itemData.platform === "その他" ? "詳細を見る" : `${itemData.platform} で詳細を見る`} <ExternalLink size={18} />
               </a>
               <p className="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1">
                 <ShieldCheck size={12} /> アフィリエイトリンクを利用しています

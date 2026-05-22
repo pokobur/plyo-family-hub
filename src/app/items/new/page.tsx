@@ -1,13 +1,49 @@
 'use client'
 
-import { ArrowLeft, Heart, Link as LinkIcon, Info, Star } from "lucide-react";
+import { ArrowLeft, Heart, Search, Info, Star, ShoppingBag, Check } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { createItem } from "@/app/actions/items";
+import { createItem, searchProducts } from "@/app/actions/items";
 
 export default function NewItemPage() {
   const [state, formAction, isPending] = useActionState(createItem, { message: "", errors: {} });
   const [rating, setRating] = useState(5);
+
+  // Search state variables
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [shopPlatform, setShopPlatform] = useState<"楽天" | "Amazon">("楽天");
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchKeyword.trim()) return;
+    setIsSearching(true);
+    setHasSearched(true);
+    try {
+      const results = await searchProducts(searchKeyword);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search failed:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectItem = (item: any) => {
+    setSelectedItem(item);
+    setShopPlatform(item.platform as "楽天" | "Amazon");
+  };
+
+  const getSubmitUrl = () => {
+    if (!selectedItem) return "";
+    if (shopPlatform === "Amazon") {
+      return `https://www.amazon.co.jp/s?k=${encodeURIComponent(selectedItem.title)}`;
+    }
+    return selectedItem.url;
+  };
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
@@ -24,40 +60,121 @@ export default function NewItemPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-gray-800">おすすめアイテムを共有する</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">「買ってよかった！」と思う神アイテムをパパママ仲間にシェアしましょう。</p>
+            <p className="text-sm text-gray-500 font-medium mt-1">「買ってよかった！」と思うおすすめアイテムをパパママ仲間にシェアしましょう。</p>
           </div>
         </div>
 
         {/* Form area */}
         <form action={formAction} className="flex flex-col gap-8">
-          
-          {/* Step 1: URL Input */}
+          {/* Hidden inputs to send search details to Server Action */}
+          <input type="hidden" name="title" value={selectedItem?.title || ''} />
+          <input type="hidden" name="image_url" value={selectedItem?.imageUrl || ''} />
+          <input type="hidden" name="original_url" value={getSubmitUrl()} />
+          <input type="hidden" name="platform" value={shopPlatform} />
+
+          {/* Step 1: Product Search & Auto-Retrieve */}
           <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <span className="bg-primary text-white text-xs font-black w-5 h-5 flex items-center justify-center rounded-full">1</span>
-              <label className="font-bold text-gray-800">商品のURLを貼り付け</label>
+              <label className="font-bold text-gray-800">商品を検索・選択する</label>
             </div>
-            
-            <div className="relative">
-              <input 
-                type="url" 
-                name="original_url"
-                placeholder="Amazon または 楽天 の商品URL" 
-                className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
-                required
-              />
-              <LinkIcon size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            </div>
-            {state?.errors?.original_url && <p className="text-red-500 text-xs font-bold">{state.errors.original_url[0]}</p>}
-            
+
+            {/* Search Input bar */}
             <div className="flex gap-2">
-              <span className="text-xs font-bold px-2 py-1 bg-orange-100 text-orange-700 rounded border border-orange-200">Amazon対応</span>
-              <span className="text-xs font-bold px-2 py-1 bg-red-100 text-red-700 rounded border border-red-200">楽天対応</span>
+              <div className="relative flex-1">
+                <input 
+                  type="text" 
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  placeholder="商品名やキーワード（例: オムツ、ベビーカー、レゴ）" 
+                  className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
+                />
+                <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
+              <button 
+                type="button"
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="bg-primary text-white font-bold px-6 py-3.5 rounded-xl hover:bg-primary-dark transition-colors text-sm shadow-md hover:shadow-lg disabled:opacity-50 whitespace-nowrap"
+              >
+                {isSearching ? '検索中...' : '検索'}
+              </button>
             </div>
+
+            {/* Search Results */}
+            {hasSearched && searchResults.length > 0 && (
+              <div className="mt-2 flex flex-col gap-2 max-h-60 overflow-y-auto bg-white border border-gray-100 rounded-xl p-2">
+                {searchResults.map((item, index) => {
+                  const isSelected = selectedItem?.title === item.title;
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleSelectItem(item)}
+                      className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors w-full border ${isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:bg-gray-50'}`}
+                    >
+                      <img src={item.imageUrl} alt={item.title} className="w-12 h-12 object-cover rounded-md border border-gray-100 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gray-800 truncate">{item.title}</p>
+                        <p className="text-[10px] text-gray-400 font-bold mt-1">
+                          価格目安: {item.price && !isNaN(parseInt(item.price)) ? `${parseInt(item.price).toLocaleString()}円` : '価格情報なし'}
+                        </p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-primary bg-primary text-white' : 'border-gray-200'}`}>
+                        {isSelected && <Check size={12} />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {hasSearched && searchResults.length === 0 && !isSearching && (
+              <p className="text-xs text-red-500 font-bold mt-1">検索結果が見つかりませんでした。別のキーワードでお試しください。</p>
+            )}
+
+            {/* Selected Product Preview */}
+            {selectedItem && (
+              <div className="mt-4 bg-white border border-primary/20 p-4 rounded-xl flex flex-col gap-4 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+                <div className="flex gap-4 items-center">
+                  <img src={selectedItem.imageUrl} alt={selectedItem.title} className="w-16 h-16 object-cover rounded-md border border-gray-100 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] bg-primary/10 text-primary-dark font-black px-2 py-0.5 rounded">選択中の商品</span>
+                    <h4 className="font-bold text-xs text-gray-800 truncate mt-1">{selectedItem.title}</h4>
+                  </div>
+                </div>
+                
+                {/* Shop/Platform Toggle */}
+                <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+                  <span className="text-xs font-bold text-gray-600">紹介するショップを選択:</span>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="shop_select" 
+                        checked={shopPlatform === "楽天"}
+                        onChange={() => setShopPlatform("楽天")}
+                        className="text-primary focus:ring-primary"
+                      />
+                      <span className="text-xs font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded border border-red-200">楽天市場として紹介</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="shop_select" 
+                        checked={shopPlatform === "Amazon"}
+                        onChange={() => setShopPlatform("Amazon")}
+                        className="text-primary focus:ring-primary"
+                      />
+                      <span className="text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded border border-orange-200">Amazonとして紹介</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
             
-            <p className="text-xs text-gray-500 font-medium">
-              URLを貼り付けると、商品名や画像が自動的に取得されます。（※現在モックアップのため自動取得されません）
-            </p>
+            {state?.errors?.original_url && <p className="text-red-500 text-xs font-bold">商品を選択してください。</p>}
           </div>
 
           {/* Step 2: Review Content */}
@@ -111,7 +228,7 @@ export default function NewItemPage() {
                 name="description"
                 placeholder="どんな悩みが解決したか、どのようなシーンで役立っているかなど、具体的に教えてください。" 
                 rows={6}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-4 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y font-medium"
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-4 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y font-medium text-sm"
                 required
               ></textarea>
               {state?.errors?.description && <p className="text-red-500 text-xs font-bold">{state.errors.description[0]}</p>}
@@ -126,14 +243,18 @@ export default function NewItemPage() {
             </div>
           </div>
 
-          {state?.message && <div className="text-red-500 font-bold bg-red-50 p-4 rounded-xl border border-red-100">{state.message}</div>}
+          {state?.message && <div className="text-red-500 font-bold bg-red-50 p-4 rounded-xl border border-red-100 text-sm">{state.message}</div>}
 
           {/* Submit Action */}
           <div className="mt-4 pt-6 border-t border-gray-100 flex items-center justify-end gap-4">
             <Link href="/items" className="text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
               キャンセル
             </Link>
-            <button disabled={isPending} type="submit" className="bg-primary text-white font-bold px-8 py-3.5 rounded-full hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed">
+            <button 
+              disabled={isPending || !selectedItem} 
+              type="submit" 
+              className="bg-primary text-white font-bold px-8 py-3.5 rounded-full hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
               {isPending ? '投稿中...' : 'アイテムを投稿する'}
             </button>
           </div>

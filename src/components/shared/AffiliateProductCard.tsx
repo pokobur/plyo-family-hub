@@ -5,7 +5,7 @@ interface AffiliateProductCardProps {
   title: string;
   description: string;
   imageUrl: string;
-  platform: "Amazon" | "楽天" | "plyo.blog";
+  platform: "Amazon" | "楽天" | "plyo.blog" | "その他" | string;
   url: string;
   rating?: number;
 }
@@ -16,7 +16,10 @@ export default function AffiliateProductCard({ title, description, imageUrl, pla
     Amazon: "bg-orange-100 text-orange-700 border-orange-200",
     "楽天": "bg-red-100 text-red-700 border-red-200",
     "plyo.blog": "bg-indigo-100 text-indigo-700 border-indigo-200",
+    "その他": "bg-gray-100 text-gray-700 border-gray-200",
   };
+
+  const currentStyle = platformStyles[platform as keyof typeof platformStyles] || platformStyles["その他"];
 
   return (
     <a 
@@ -48,8 +51,8 @@ export default function AffiliateProductCard({ title, description, imageUrl, pla
             </div>
             
             {/* Affiliate Tag */}
-            <div className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${platformStyles[platform]}`}>
-              {platform}で見る <ExternalLink size={10} />
+            <div className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${currentStyle}`}>
+              {platform === "その他" ? "詳細を見る" : `${platform}で見る`} <ExternalLink size={10} />
             </div>
           </div>
         </div>

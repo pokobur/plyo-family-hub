@@ -24,12 +24,12 @@ export default async function ItemsPage() {
       {/* UGC Submission CTA */}
       <section className="glass-panel p-8 rounded-3xl border-2 border-primary/20 text-center relative overflow-hidden">
         <div className="relative z-10">
-          <h2 className="text-xl font-bold mb-2">あなたの「神アイテム」を教えてください！</h2>
-          <p className="text-sm text-gray-500 mb-6">Amazonや楽天のURLを貼るだけで、簡単に美しいレビューカードが作れます。</p>
+          <h2 className="text-xl font-bold mb-2">あなたの「おすすめアイテム」を教えてください！</h2>
+          <p className="text-sm text-gray-500 mb-6">アイテムを検索して選ぶだけで、商品情報が自動でセットされます。</p>
           <div className="flex max-w-lg mx-auto gap-2">
             <input 
               type="text" 
-              placeholder="商品のURLを貼り付け..." 
+              placeholder="商品名やキーワードで検索して追加..." 
               className="flex-1 bg-white border border-gray-200 rounded-full px-6 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               readOnly
             />

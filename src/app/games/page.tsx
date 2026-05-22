@@ -1,4 +1,4 @@
-import { Gamepad2, Sparkles, Flame } from "lucide-react";
+import { Gamepad2, Sparkles, Flame, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export default function GamesPage() {
@@ -11,10 +11,21 @@ export default function GamesPage() {
           <Gamepad2 className="text-primary" />
           子供とあそぶ（息抜きコンテンツ）
         </h1>
-        <p className="text-gray-600 font-medium">
+        <p className="text-gray-600 font-medium mb-6">
           親子で楽しめる知育アプリや、ちょっとした息抜きに最適なミニゲーム。<br/>
           すべて無料で遊べます。
         </p>
+        <div>
+          <a 
+            href="https://game.plyo.blog" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3 rounded-full text-sm shadow-md hover-lift transition-all"
+          >
+            <span>game.plyo.blog ポータルを開く</span>
+            <ExternalLink size={16} />
+          </a>
+        </div>
       </div>
 
       {/* Featured Game */}

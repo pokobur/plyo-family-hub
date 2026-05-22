@@ -11,7 +11,7 @@ const mplus = M_PLUS_Rounded_1c({
 
 export const metadata: Metadata = {
   title: "plyo. family hub - 子育て情報と遊びのポータル",
-  description: "家族みんなで楽しめるゲームと、育児を楽にする神アイテム・Q&Aが集まるポータルサイトです。",
+  description: "家族みんなで楽しめるゲームと、育児を楽にするおすすめアイテム・Q&Aが集まるポータルサイトです。",
   openGraph: {
     title: "plyo. family hub - 子育て情報と遊びのポータル",
     description: "育児の悩みを解決する知恵袋や、本当におすすめのアイテムが集まる子育て支援ポータル。",
