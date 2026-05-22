@@ -1,7 +1,9 @@
-import { MessageCircle, Heart, Share2, AlertCircle, ArrowLeft } from "lucide-react";
+import { MessageCircle, Heart, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getQuestion } from "@/app/actions/qa";
 import { notFound } from "next/navigation";
+import AnswerForm from "@/components/qa/AnswerForm";
+import ShareButton from "@/components/shared/ShareButton";
 
 export default async function QADetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -53,9 +55,7 @@ export default async function QADetailPage({ params }: { params: Promise<{ id: s
               <button className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-red-500 transition-colors bg-gray-50 px-4 py-2 rounded-full">
                 <Heart size={16} /> {question.likes} いいね
               </button>
-              <button className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-blue-500 transition-colors bg-gray-50 px-4 py-2 rounded-full">
-                <Share2 size={16} /> シェア
-              </button>
+              <ShareButton size={16} />
             </div>
             <button className="text-gray-400 hover:text-gray-600">
               <AlertCircle size={18} />
@@ -112,14 +112,8 @@ export default async function QADetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* Post Answer CTA */}
-      <div className="mt-8 bg-blue-50 p-6 md:p-8 rounded-3xl border border-blue-100 text-center">
-        <h3 className="font-bold text-blue-900 mb-2">あなたも回答してみませんか？</h3>
-        <p className="text-sm text-blue-800/80 mb-6">あなたの経験が、他のパパママの助けになります。</p>
-        <button className="bg-blue-600 text-white font-bold px-8 py-3 rounded-full hover:bg-blue-700 transition-colors shadow-md hover-lift">
-          回答を投稿する
-        </button>
-      </div>
+      {/* Answer Form */}
+      <AnswerForm questionId={question.id} />
 
     </div>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Gamepad2, HeartHandshake, MessageCircleQuestion, Settings, Sparkles } from "lucide-react";
+import { Gamepad2, HeartHandshake, MessageCircleQuestion, Sparkles } from "lucide-react";
+import SettingsButton from "./SettingsButton";
 
 export default function Header() {
   return (
@@ -41,9 +42,7 @@ export default function Header() {
           >
             📚 子育て記事を読む
           </a>
-          <button className="p-2 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full transition-colors">
-            <Settings size={20} />
-          </button>
+          <SettingsButton />
         </div>
       </div>
     </header>

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { Star, ExternalLink, Heart, MessageSquare, ArrowLeft, ShieldCheck, Share2 } from "lucide-react";
+import { Star, ExternalLink, Heart, MessageSquare, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import ShareButton from "@/components/shared/ShareButton";
 import { getItem } from "@/app/actions/items";
 import { notFound } from "next/navigation";
 
@@ -98,9 +99,10 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
           <button className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-500 transition-colors bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-full hover-lift">
             <Heart size={18} className="text-gray-400" /> 参考になった ({itemData.likes})
           </button>
-          <button className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-500 transition-colors bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-full hover-lift">
-            <Share2 size={18} className="text-gray-400" /> シェア
-          </button>
+          <ShareButton 
+            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-500 transition-colors bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-full hover-lift" 
+            size={18} 
+          />
         </div>
         <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
           <MessageSquare size={18} /> 0 件のコメント

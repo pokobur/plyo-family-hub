@@ -91,3 +91,44 @@ export async function getQuestion(id: string) {
 
   return { question, answers: answers || [] }
 }
+
+const AnswerFormSchema = z.object({
+  question_id: z.string().uuid("無効な質問IDです"),
+  body: z.string().min(5, "回答は5文字以上必要です").max(2000, "回答は2000文字以内で入力してください"),
+})
+
+export async function createAnswer(prevState: unknown, formData: FormData) {
+  const supabase = await createClient()
+
+  const rawData = {
+    question_id: formData.get('question_id'),
+    body: formData.get('body'),
+  }
+
+  const validatedData = AnswerFormSchema.safeParse(rawData)
+
+  if (!validatedData.success) {
+    return {
+      success: false,
+      errors: validatedData.error.flatten().fieldErrors,
+      message: '入力内容にエラーがあります。',
+    }
+  }
+
+  const { error } = await supabase
+    .from('answers')
+    .insert({
+      question_id: validatedData.data.question_id,
+      body: validatedData.data.body,
+      author: '匿名パパママ'
+    })
+
+  if (error) {
+    console.error('Failed to insert answer:', error)
+    return { success: false, message: 'データベースエラーが発生しました。' }
+  }
+
+  revalidatePath(`/qa/${validatedData.data.question_id}`)
+  return { success: true, message: '回答を投稿しました！' }
+}
+
