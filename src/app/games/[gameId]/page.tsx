@@ -86,7 +86,7 @@ export default async function GameEmbedPage({ params }: { params: Promise<{ game
       </div>
 
       {/* Embedded Game View */}
-      <div className={`relative w-full aspect-[4/3] md:h-[650px] bg-gray-900 rounded-[2.5rem] overflow-hidden border-4 bg-gradient-to-br ${game.color} shadow-2xl flex flex-col`}>
+      <div className={`relative w-full h-[50vh] sm:h-[60vh] md:h-[650px] bg-gray-900 rounded-[2.5rem] overflow-hidden border-4 bg-gradient-to-br ${game.color} shadow-2xl flex flex-col`}>
         <iframe 
           src={game.url} 
           title={game.title}

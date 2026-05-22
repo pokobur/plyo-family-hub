@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createReadClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 // Security: Validate inputs strictly
@@ -14,6 +14,12 @@ const QAFormSchema = z.object({
 
 export async function createQuestion(prevState: unknown, formData: FormData) {
   const supabase = await createClient()
+
+  // Authenticate user
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { message: 'ログインが必要です。' }
+  }
 
   const rawData = {
     title: formData.get('title'),
@@ -31,14 +37,17 @@ export async function createQuestion(prevState: unknown, formData: FormData) {
     }
   }
 
+  // Set author name using custom display name (metadata) or email fallback
+  const author = user.user_metadata?.nickname || user.email?.split('@')[0] || '匿名パパママ'
+
   const { data, error } = await supabase
     .from('questions')
     .insert({
       title: validatedData.data.title,
       body: validatedData.data.body,
       category: validatedData.data.category,
-      // Setting a default author for now as we don't have auth yet
-      author: '匿名パパママ'
+      author,
+      user_id: user.id
     })
     .select()
     .single()
@@ -48,48 +57,63 @@ export async function createQuestion(prevState: unknown, formData: FormData) {
     return { message: 'データベースエラーが発生しました。' }
   }
 
+  // Invalidate cache tags
+  revalidateTag('questions', 'max')
   revalidatePath('/qa')
+  
   redirect(`/qa/${data.id}`)
 }
 
 export async function getQuestions() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('questions')
-    .select('*, answers(count)')
-    .order('created_at', { ascending: false })
+  return unstable_cache(
+    async () => {
+      const supabase = createReadClient()
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*, answers(count)')
+        .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching questions:', error)
-    return []
-  }
-  return data
+      if (error) {
+        console.error('Error fetching questions:', error)
+        return []
+      }
+      return data
+    },
+    ['questions'],
+    { tags: ['questions'] }
+  )()
 }
 
 export async function getQuestion(id: string) {
-  const supabase = await createClient()
-  const { data: question, error: qError } = await supabase
-    .from('questions')
-    .select('*')
-    .eq('id', id)
-    .single()
+  return unstable_cache(
+    async () => {
+      const supabase = createReadClient()
+      const { data: question, error: qError } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-  if (qError) {
-    console.error('Error fetching question:', qError)
-    return null
-  }
+      if (qError) {
+        console.error('Error fetching question:', qError)
+        return null
+      }
 
-  const { data: answers, error: aError } = await supabase
-    .from('answers')
-    .select('*')
-    .eq('question_id', id)
-    .order('created_at', { ascending: true })
+      const { data: answers, error: aError } = await supabase
+        .from('answers')
+        .select('*')
+        .eq('question_id', id)
+        .order('created_at', { ascending: true })
 
-  if (aError) {
-    console.error('Error fetching answers:', aError)
-  }
+      if (aError) {
+        console.error('Error fetching answers:', aError)
+      }
 
-  return { question, answers: answers || [] }
+      return { question, answers: answers || [] }
+    },
+    ['question', id],
+    { tags: [`question-${id}`] }
+  )()
 }
 
 const AnswerFormSchema = z.object({
@@ -99,6 +123,12 @@ const AnswerFormSchema = z.object({
 
 export async function createAnswer(prevState: unknown, formData: FormData) {
   const supabase = await createClient()
+
+  // Authenticate user
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, message: 'ログインが必要です。' }
+  }
 
   const rawData = {
     question_id: formData.get('question_id'),
@@ -115,12 +145,16 @@ export async function createAnswer(prevState: unknown, formData: FormData) {
     }
   }
 
+  // Set author name using custom display name (metadata) or email fallback
+  const author = user.user_metadata?.nickname || user.email?.split('@')[0] || '匿名パパママ'
+
   const { error } = await supabase
     .from('answers')
     .insert({
       question_id: validatedData.data.question_id,
       body: validatedData.data.body,
-      author: '匿名パパママ'
+      author,
+      user_id: user.id
     })
 
   if (error) {
@@ -128,7 +162,10 @@ export async function createAnswer(prevState: unknown, formData: FormData) {
     return { success: false, message: 'データベースエラーが発生しました。' }
   }
 
+  // Invalidate cache tags
+  revalidateTag(`question-${validatedData.data.question_id}`, 'max')
+  revalidateTag('questions', 'max')
   revalidatePath(`/qa/${validatedData.data.question_id}`)
+  
   return { success: true, message: '回答を投稿しました！' }
 }
-

@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createReadClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 // Security: Validate inputs strictly
@@ -18,6 +18,12 @@ const ItemFormSchema = z.object({
 
 export async function createItem(prevState: unknown, formData: FormData) {
   const supabase = await createClient()
+
+  // Authenticate user
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { message: 'ログインが必要です。' }
+  }
 
   const rawData = {
     title: formData.get('title'),
@@ -46,13 +52,14 @@ export async function createItem(prevState: unknown, formData: FormData) {
 
   if (platform === 'Amazon' || original_url.includes('amazon.co.jp') || original_url.includes('amzn.to')) {
     const moshimoAmazonId = process.env.MOSHIMO_AMAZON_ID || '1234567' // もしもアフィリエイトのAmazon用a_id
-    // もしもアフィリエイト「どこでもリンク」のAmazon基本フォーマット
     affiliate_url = `https://af.moshimo.com/af/c/click?a_id=${moshimoAmazonId}&p_id=170&pc_id=185&pl_id=4062&url=${encodeURIComponent(original_url)}`
   } else if (platform === '楽天' || original_url.includes('rakuten.co.jp')) {
     const moshimoRakutenId = process.env.MOSHIMO_RAKUTEN_ID || '1234567' // もしもアフィリエイトの楽天用a_id
-    // もしもアフィリエイト「どこでもリンク」の楽天基本フォーマット
     affiliate_url = `https://af.moshimo.com/af/c/click?a_id=${moshimoRakutenId}&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(original_url)}`
   }
+
+  // Set author name using custom display name (metadata) or email fallback
+  const author = user.user_metadata?.nickname || user.email?.split('@')[0] || '匿名パパママ'
 
   const { data, error } = await supabase
     .from('items')
@@ -65,7 +72,8 @@ export async function createItem(prevState: unknown, formData: FormData) {
       platform,
       title,
       image_url,
-      author: '匿名パパママ'
+      author,
+      user_id: user.id,
     })
     .select()
     .single()
@@ -75,7 +83,10 @@ export async function createItem(prevState: unknown, formData: FormData) {
     return { message: 'データベースエラーが発生しました。' }
   }
 
+  // Invalidate cache
+  revalidateTag('items', 'max')
   revalidatePath('/items')
+  
   redirect(`/items/${data.id}`)
 }
 
@@ -152,30 +163,42 @@ export async function searchProducts(keyword: string) {
 }
 
 export async function getItems() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('items')
-    .select('*')
-    .order('created_at', { ascending: false })
+  return unstable_cache(
+    async () => {
+      const supabase = createReadClient()
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching items:', error)
-    return []
-  }
-  return data
+      if (error) {
+        console.error('Error fetching items:', error)
+        return []
+      }
+      return data
+    },
+    ['items'],
+    { tags: ['items'] }
+  )()
 }
 
 export async function getItem(id: string) {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('items')
-    .select('*')
-    .eq('id', id)
-    .single()
+  return unstable_cache(
+    async () => {
+      const supabase = createReadClient()
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-  if (error) {
-    console.error('Error fetching item:', error)
-    return null
-  }
-  return data
+      if (error) {
+        console.error('Error fetching item:', error)
+        return null
+      }
+      return data
+    },
+    ['item', id],
+    { tags: [`item-${id}`] }
+  )()
 }
