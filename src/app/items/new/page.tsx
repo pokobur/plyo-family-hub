@@ -2,10 +2,11 @@
 
 import { ArrowLeft, Heart, Search, Info, Star, ShoppingBag, Check } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { createItem, searchProducts } from "@/app/actions/items";
 
-export default function NewItemPage() {
+function NewItemPageContent() {
   const [state, formAction, isPending] = useActionState(createItem, { message: "", errors: {} });
   const [rating, setRating] = useState(5);
 
@@ -17,8 +18,31 @@ export default function NewItemPage() {
   const [shopPlatform, setShopPlatform] = useState<"楽天" | "Amazon">("楽天");
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") || "";
+
+  // Pre-populate search and search automatically if "q" query param is present
+  useEffect(() => {
+    if (query) {
+      setSearchKeyword(query);
+      const doInitialSearch = async () => {
+        setIsSearching(true);
+        setHasSearched(true);
+        try {
+          const results = await searchProducts(query);
+          setSearchResults(results);
+        } catch (error) {
+          console.error("Initial search failed:", error);
+        } finally {
+          setIsSearching(false);
+        }
+      };
+      doInitialSearch();
+    }
+  }, [query]);
+
+  const handleSearch = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!searchKeyword.trim()) return;
     setIsSearching(true);
     setHasSearched(true);
@@ -86,6 +110,12 @@ export default function NewItemPage() {
                   type="text" 
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearch(e);
+                    }
+                  }}
                   placeholder="商品名やキーワード（例: オムツ、ベビーカー、レゴ）" 
                   className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
                 />
@@ -93,9 +123,9 @@ export default function NewItemPage() {
               </div>
               <button 
                 type="button"
-                onClick={handleSearch}
+                onClick={() => handleSearch()}
                 disabled={isSearching}
-                className="bg-primary text-white font-bold px-6 py-3.5 rounded-xl hover:bg-primary-dark transition-colors text-sm shadow-md hover:shadow-lg disabled:opacity-50 whitespace-nowrap"
+                className="bg-primary text-white font-bold px-6 py-3.5 rounded-xl hover:bg-primary-dark transition-colors text-sm shadow-md hover:shadow-lg disabled:opacity-50 whitespace-nowrap cursor-pointer"
               >
                 {isSearching ? '検索中...' : '検索'}
               </button>
@@ -111,7 +141,7 @@ export default function NewItemPage() {
                       key={index}
                       type="button"
                       onClick={() => handleSelectItem(item)}
-                      className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors w-full border ${isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:bg-gray-50'}`}
+                      className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors w-full border cursor-pointer ${isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:bg-gray-50'}`}
                     >
                       <img src={item.imageUrl} alt={item.title} className="w-12 h-12 object-cover rounded-md border border-gray-100 shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -210,7 +240,7 @@ export default function NewItemPage() {
                     type="button" 
                     key={star} 
                     onClick={() => setRating(star)}
-                    className={`transition-colors ${star <= rating ? 'text-secondary' : 'text-gray-300 hover:text-secondary/50'}`}
+                    className={`transition-colors cursor-pointer ${star <= rating ? 'text-secondary' : 'text-gray-300 hover:text-secondary/50'}`}
                   >
                     <Star size={32} className={star <= rating ? 'fill-secondary' : ''} />
                   </button>
@@ -238,7 +268,7 @@ export default function NewItemPage() {
             <div className="flex gap-2 p-3 bg-amber-50 rounded-xl mt-1 border border-amber-100">
               <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800/80 leading-relaxed font-medium">
-                ご自身が実際に購入し、使用したアイテムのみご投稿ください。アフィリエイトリンクはシステム側で自動的に生成・付与されます。
+                ご自身が実際に購入し、使用したアイテムのみご投稿ください。商品リンクはシステム側で自動的に生成・付与されます。
               </p>
             </div>
           </div>
@@ -253,7 +283,7 @@ export default function NewItemPage() {
             <button 
               disabled={isPending || !selectedItem} 
               type="submit" 
-              className="bg-primary text-white font-bold px-8 py-3.5 rounded-full hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="bg-primary text-white font-bold px-8 py-3.5 rounded-full hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
             >
               {isPending ? '投稿中...' : 'アイテムを投稿する'}
             </button>
@@ -262,5 +292,17 @@ export default function NewItemPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function NewItemPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-3xl mx-auto py-12 text-center text-gray-500 font-bold">
+        読み込み中...
+      </div>
+    }>
+      <NewItemPageContent />
+    </Suspense>
   );
 }
