@@ -95,6 +95,97 @@ export async function searchProducts(keyword: string) {
     return [];
   }
 
+  const trimmedKeyword = keyword.trim();
+
+  // 1. Direct URL detection and OpenGraph metadata extraction
+  if (trimmedKeyword.startsWith('http://') || trimmedKeyword.startsWith('https://')) {
+    try {
+      const res = await fetch(trimmedKeyword, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7'
+        }
+      });
+      if (res.ok) {
+        const html = await res.text();
+        
+        // Extract OpenGraph tags
+        const ogTitleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
+                            html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+        const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+                            html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+
+        let title = ogTitleMatch ? ogTitleMatch[1] : (titleMatch ? titleMatch[1] : '商品ページ');
+        let imageUrl = ogImageMatch ? ogImageMatch[1] : '';
+
+        if (!imageUrl) {
+          imageUrl = "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80";
+        }
+
+        title = title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+
+        let platform = '楽天';
+        if (trimmedKeyword.includes('amazon.co.jp') || trimmedKeyword.includes('amzn.to')) {
+          platform = 'Amazon';
+        }
+
+        return [{
+          title,
+          imageUrl,
+          url: trimmedKeyword,
+          price: '',
+          platform
+        }];
+      }
+    } catch (err) {
+      console.error('Failed to extract metadata from URL:', err);
+      let platform = '楽天';
+      if (trimmedKeyword.includes('amazon.co.jp') || trimmedKeyword.includes('amzn.to')) {
+        platform = 'Amazon';
+      }
+      return [{
+        title: '貼り付けられた商品ページ',
+        imageUrl: 'https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+        url: trimmedKeyword,
+        price: '',
+        platform
+      }];
+    }
+  }
+
+  // 2. Official Rakuten Ichiba Item Search API integration
+  const rakutenAppId = process.env.RAKUTEN_APP_ID;
+  if (rakutenAppId) {
+    const apiUrl = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${rakutenAppId}&keyword=${encodeURIComponent(trimmedKeyword)}&hits=10&format=json`;
+    try {
+      const res = await fetch(apiUrl);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.Items && data.Items.length > 0) {
+          return data.Items.map((itemObj: any) => {
+            const item = itemObj.Item;
+            let imageUrl = '';
+            if (item.mediumImageURLs && item.mediumImageURLs.length > 0) {
+              imageUrl = item.mediumImageURLs[0].imageUrl;
+              imageUrl = imageUrl.replace(/(\?_ex=\d+x\d+)/, '').replace(/(\?fitin=\d+:\d+)/, '');
+            }
+            return {
+              title: item.itemName,
+              imageUrl: imageUrl || "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+              url: item.itemUrl,
+              price: String(item.itemPrice),
+              platform: '楽天'
+            };
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to query official Rakuten API:', err);
+    }
+  }
+
+  // 3. Fallback: Local Scraping + Dynamic Mock Fallback
   const mockDb = [
     { title: "エルゴベビー ベビーキャリア OMNI Breeze", imageUrl: "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", price: "33990", url: "https://item.rakuten.co.jp/ergobaby/omni-breeze/", platform: "楽天" },
     { title: "パンパース オムツ さらさらケア (9-14kg) 174枚", imageUrl: "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", price: "4980", url: "https://item.rakuten.co.jp/pampers/diapers/", platform: "楽天" },
@@ -106,37 +197,37 @@ export async function searchProducts(keyword: string) {
 
   const getFallback = () => {
     const filtered = mockDb.filter(item => 
-      item.title.toLowerCase().includes(keyword.toLowerCase()) || 
-      keyword.toLowerCase().includes(item.title.toLowerCase().substring(0, 3))
+      item.title.toLowerCase().includes(trimmedKeyword.toLowerCase()) || 
+      trimmedKeyword.toLowerCase().includes(item.title.toLowerCase().substring(0, 3))
     );
     if (filtered.length > 0) return filtered;
     
     return [
       {
-        title: `${keyword} (おすすめ・定番モデル)`,
+        title: `${trimmedKeyword} (おすすめ・定番モデル)`,
         imageUrl: "https://images.unsplash.com/photo-1515488042361-404e9250afef?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
         price: "2980",
-        url: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`,
+        url: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(trimmedKeyword)}/`,
         platform: '楽天'
       },
       {
-        title: `${keyword} (高評価レビューモデル)`,
+        title: `${trimmedKeyword} (高評価レビューモデル)`,
         imageUrl: "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
         price: "4980",
-        url: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`,
+        url: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(trimmedKeyword)}/`,
         platform: '楽天'
       },
       {
-        title: `${keyword} (人気ギフトモデル)`,
+        title: `${trimmedKeyword} (人気ギフトモデル)`,
         imageUrl: "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
         price: "8800",
-        url: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`,
+        url: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(trimmedKeyword)}/`,
         platform: '楽天'
       }
     ];
   };
 
-  const url = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`;
+  const url = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(trimmedKeyword)}/`;
   try {
     const res = await fetch(url, {
       headers: {
