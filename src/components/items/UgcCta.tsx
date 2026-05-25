@@ -21,13 +21,13 @@ export default function UgcCta() {
     <section className="glass-panel p-8 rounded-3xl border-2 border-primary/20 text-center relative overflow-hidden">
       <form onSubmit={handleSearchAndAdd} className="relative z-10">
         <h2 className="text-xl font-bold mb-2">あなたの「おすすめアイテム」を教えてください！</h2>
-        <p className="text-sm text-gray-500 mb-6">アイテムを検索して選ぶだけで、商品情報が自動でセットされます。</p>
+        <p className="text-sm text-gray-500 mb-6">商品ページのURLを貼り付けるだけで、商品情報が自動でセットされます。</p>
         <div className="flex max-w-lg mx-auto gap-2">
           <input 
-            type="text" 
+            type="url" 
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="商品名やキーワードで検索して追加..." 
+            placeholder="商品ページのURLを貼り付け（楽天・Amazonなど）" 
             className="flex-1 bg-white border border-gray-200 rounded-full px-6 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-medium"
           />
           <button type="submit" className="bg-primary text-white font-bold px-6 py-3 rounded-full hover:bg-primary-dark transition-colors flex items-center gap-1 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer text-sm">

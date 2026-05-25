@@ -96,18 +96,18 @@ function NewItemPageContent() {
           <input type="hidden" name="original_url" value={getSubmitUrl()} />
           <input type="hidden" name="platform" value={shopPlatform} />
 
-          {/* Step 1: Product Search & Auto-Retrieve */}
+          {/* Step 1: Product URL & Auto-Retrieve */}
           <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <span className="bg-primary text-white text-xs font-black w-5 h-5 flex items-center justify-center rounded-full">1</span>
-              <label className="font-bold text-gray-800">商品を検索・選択する</label>
+              <label className="font-bold text-gray-800">商品のURLを貼り付ける</label>
             </div>
 
             {/* Search Input bar */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input 
-                  type="text" 
+                  type="url" 
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
                   onKeyDown={(e) => {
@@ -116,7 +116,7 @@ function NewItemPageContent() {
                       handleSearch(e);
                     }
                   }}
-                  placeholder="商品名やキーワード（例: オムツ、ベビーカー、レゴ）" 
+                  placeholder="楽天やAmazonの商品ページのURLを貼り付けてください（https://...）" 
                   className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
                 />
                 <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -127,7 +127,7 @@ function NewItemPageContent() {
                 disabled={isSearching}
                 className="bg-primary text-white font-bold px-6 py-3.5 rounded-xl hover:bg-primary-dark transition-colors text-sm shadow-md hover:shadow-lg disabled:opacity-50 whitespace-nowrap cursor-pointer"
               >
-                {isSearching ? '検索中...' : '検索'}
+                {isSearching ? '読込中...' : '商品情報を取得'}
               </button>
             </div>
 
@@ -160,7 +160,7 @@ function NewItemPageContent() {
             )}
 
             {hasSearched && searchResults.length === 0 && !isSearching && (
-              <p className="text-xs text-red-500 font-bold mt-1">検索結果が見つかりませんでした。別のキーワードでお試しください。</p>
+              <p className="text-xs text-red-500 font-bold mt-1">商品情報を取得できませんでした。有効な商品URL（https://...）を貼り付けてください。</p>
             )}
 
             {/* Selected Product Preview */}
