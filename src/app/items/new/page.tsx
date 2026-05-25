@@ -15,6 +15,8 @@ function NewItemPageContent() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [itemTitle, setItemTitle] = useState("");
+  const [itemImageUrl, setItemImageUrl] = useState("");
   const [shopPlatform, setShopPlatform] = useState<"楽天" | "Amazon">("楽天");
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -31,6 +33,13 @@ function NewItemPageContent() {
         try {
           const results = await searchProducts(query);
           setSearchResults(results);
+          if (results.length > 0) {
+            const firstItem = results[0];
+            setSelectedItem(firstItem);
+            setItemTitle(firstItem.title);
+            setItemImageUrl(firstItem.imageUrl);
+            setShopPlatform(firstItem.platform as "楽天" | "Amazon");
+          }
         } catch (error) {
           console.error("Initial search failed:", error);
         } finally {
@@ -49,6 +58,17 @@ function NewItemPageContent() {
     try {
       const results = await searchProducts(searchKeyword);
       setSearchResults(results);
+      if (results.length > 0) {
+        const firstItem = results[0];
+        setSelectedItem(firstItem);
+        setItemTitle(firstItem.title);
+        setItemImageUrl(firstItem.imageUrl);
+        setShopPlatform(firstItem.platform as "楽天" | "Amazon");
+      } else {
+        setSelectedItem(null);
+        setItemTitle("");
+        setItemImageUrl("");
+      }
     } catch (error) {
       console.error("Search failed:", error);
     } finally {
@@ -58,15 +78,20 @@ function NewItemPageContent() {
 
   const handleSelectItem = (item: any) => {
     setSelectedItem(item);
+    setItemTitle(item.title);
+    setItemImageUrl(item.imageUrl);
     setShopPlatform(item.platform as "楽天" | "Amazon");
   };
 
   const getSubmitUrl = () => {
     if (!selectedItem) return "";
-    if (shopPlatform === "Amazon") {
-      return `https://www.amazon.co.jp/s?k=${encodeURIComponent(selectedItem.title)}`;
+    if (selectedItem.platform === shopPlatform) {
+      return selectedItem.url;
     }
-    return selectedItem.url;
+    if (shopPlatform === "Amazon") {
+      return `https://www.amazon.co.jp/s?k=${encodeURIComponent(itemTitle)}`;
+    }
+    return `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(itemTitle)}/`;
   };
 
   return (
@@ -91,8 +116,8 @@ function NewItemPageContent() {
         {/* Form area */}
         <form action={formAction} className="flex flex-col gap-8">
           {/* Hidden inputs to send search details to Server Action */}
-          <input type="hidden" name="title" value={selectedItem?.title || ''} />
-          <input type="hidden" name="image_url" value={selectedItem?.imageUrl || ''} />
+          <input type="hidden" name="title" value={itemTitle || ''} />
+          <input type="hidden" name="image_url" value={itemImageUrl || ''} />
           <input type="hidden" name="original_url" value={getSubmitUrl()} />
           <input type="hidden" name="platform" value={shopPlatform} />
 
@@ -163,42 +188,90 @@ function NewItemPageContent() {
               <p className="text-xs text-red-500 font-bold mt-1">商品情報を取得できませんでした。有効な商品URL（https://...）を貼り付けてください。</p>
             )}
 
-            {/* Selected Product Preview */}
+            {/* Selected Product Edit / Preview */}
             {selectedItem && (
-              <div className="mt-4 bg-white border border-primary/20 p-4 rounded-xl flex flex-col gap-4 shadow-sm relative overflow-hidden">
+              <div className="mt-4 bg-white border border-primary/20 p-5 rounded-2xl flex flex-col gap-4 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
-                <div className="flex gap-4 items-center">
-                  <img src={selectedItem.imageUrl} alt={selectedItem.title} className="w-16 h-16 object-cover rounded-md border border-gray-100 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] bg-primary/10 text-primary-dark font-black px-2 py-0.5 rounded">選択中の商品</span>
-                    <h4 className="font-bold text-xs text-gray-800 truncate mt-1">{selectedItem.title}</h4>
-                  </div>
-                </div>
                 
-                {/* Shop/Platform Toggle */}
-                <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
-                  <span className="text-xs font-bold text-gray-600">紹介するショップを選択:</span>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="shop_select" 
-                        checked={shopPlatform === "楽天"}
-                        onChange={() => setShopPlatform("楽天")}
-                        className="text-primary focus:ring-primary"
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] bg-primary/10 text-primary-dark font-black px-2 py-0.5 rounded">商品情報の確認・編集</span>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {/* Title Input */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-gray-700">商品名 <span className="text-red-500">*</span></label>
+                    <input 
+                      type="text" 
+                      value={itemTitle} 
+                      onChange={(e) => setItemTitle(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-xs"
+                      placeholder="商品名を入力してください"
+                      required
+                    />
+                    {state?.errors?.title && <p className="text-red-500 text-[11px] font-bold mt-0.5">{state.errors.title[0]}</p>}
+                  </div>
+
+                  {/* Image URL Input */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-gray-700">画像URL <span className="text-red-500">*</span></label>
+                    <input 
+                      type="url" 
+                      value={itemImageUrl} 
+                      onChange={(e) => setItemImageUrl(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-xs"
+                      placeholder="画像URLを入力してください"
+                      required
+                    />
+                    <p className="text-[10px] text-gray-400 font-bold leading-normal">
+                      ※ Amazonなどで画像が自動取得されない場合、Amazonの画像を右クリックして「画像アドレスをコピー」し、ここに貼り付けてください。
+                    </p>
+                    {state?.errors?.image_url && <p className="text-red-500 text-[11px] font-bold mt-0.5">{state.errors.image_url[0]}</p>}
+                  </div>
+
+                  {/* Image Preview */}
+                  {itemImageUrl && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl w-fit">
+                      <img 
+                        src={itemImageUrl} 
+                        alt="プレビュー" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80";
+                        }}
+                        className="w-16 h-16 object-cover rounded-md border border-gray-200 shrink-0" 
                       />
-                      <span className="text-xs font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded border border-red-200">楽天市場として紹介</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="shop_select" 
-                        checked={shopPlatform === "Amazon"}
-                        onChange={() => setShopPlatform("Amazon")}
-                        className="text-primary focus:ring-primary"
-                      />
-                      <span className="text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded border border-orange-200">Amazonとして紹介</span>
-                    </label>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-400 font-bold">表示画像プレビュー</span>
+                        <span className="text-[9px] text-gray-300 font-medium truncate max-w-[200px]">{itemImageUrl}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Shop/Platform Toggle */}
+                  <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+                    <span className="text-xs font-bold text-gray-600">紹介するショップを選択:</span>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="shop_select" 
+                          checked={shopPlatform === "楽天"}
+                          onChange={() => setShopPlatform("楽天")}
+                          className="text-primary focus:ring-primary"
+                        />
+                        <span className="text-xs font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded border border-red-200">楽天市場として紹介</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="shop_select" 
+                          checked={shopPlatform === "Amazon"}
+                          onChange={() => setShopPlatform("Amazon")}
+                          className="text-primary focus:ring-primary"
+                        />
+                        <span className="text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded border border-orange-200">Amazonとして紹介</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
