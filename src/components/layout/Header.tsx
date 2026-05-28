@@ -16,12 +16,12 @@ export default function Header() {
           <div className="group-hover:rotate-12 transition-transform shrink-0">
             <img 
               src="/logo.jpg" 
-              alt="plyo. family hub" 
+              alt="plyo. family hug" 
               className="w-8 h-8 rounded-xl object-cover border border-gray-100 shadow-xs" 
             />
           </div>
           <span className="font-black text-xl tracking-tight text-foreground">
-            plyo. <span className="text-primary">family hub</span>
+            plyo. <span className="text-primary">family hug</span>
           </span>
         </Link>
 

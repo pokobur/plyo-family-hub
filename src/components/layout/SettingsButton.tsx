@@ -326,7 +326,7 @@ export default function SettingsButton() {
 
               {/* Section 4: App info */}
               <div className="mt-auto pt-6 border-t border-gray-100 text-center flex flex-col gap-1 text-[11px] text-gray-400 font-medium">
-                <span>plyo. family hub v1.0.0</span>
+                <span>plyo. family hug v1.0.0</span>
                 <span>&copy; {new Date().getFullYear()} plyo.blog</span>
               </div>
 

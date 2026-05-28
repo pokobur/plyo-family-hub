@@ -11,19 +11,19 @@ const mplus = M_PLUS_Rounded_1c({
 });
 
 export const metadata: Metadata = {
-  title: "plyo. family hub - 子育て情報と遊びのポータル",
+  title: "plyo. family hug - 子育て情報と遊びのポータル",
   description: "家族みんなで楽しめるゲームと、育児を楽にするおすすめアイテム・Q&Aが集まるポータルサイトです。",
   openGraph: {
-    title: "plyo. family hub - 子育て情報と遊びのポータル",
+    title: "plyo. family hug - 子育て情報と遊びのポータル",
     description: "育児の悩みを解決する知恵袋や、本当におすすめのアイテムが集まる子育て支援ポータル。",
     url: "https://family.plyo.blog",
-    siteName: "plyo. family hub",
+    siteName: "plyo. family hug",
     images: [
       {
         url: "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630&q=80",
         width: 1200,
         height: 630,
-        alt: "plyo. family hub",
+        alt: "plyo. family hug",
       },
     ],
     locale: "ja_JP",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "plyo. family hub - 子育て情報と遊びのポータル",
+    title: "plyo. family hug - 子育て情報と遊びのポータル",
     description: "育児の悩みを解決する知恵袋や、本当におすすめのアイテムが集まる子育て支援ポータル。",
     images: ["https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630&q=80"],
   },
