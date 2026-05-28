@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MessageCircle, Star, Gamepad2 } from 'lucide-react'
+import { Home, MessageCircle, Star, Gamepad2, Gift } from 'lucide-react'
 
 export default function MobileNav() {
   const pathname = usePathname()
@@ -10,6 +10,7 @@ export default function MobileNav() {
   const navItems = [
     { label: 'ホーム', href: '/', icon: Home },
     { label: '知恵袋', href: '/qa', icon: MessageCircle },
+    { label: 'お譲り', href: '/gifts', icon: Gift },
     { label: 'アイテム', href: '/items', icon: Star },
     { label: 'あそぶ', href: '/games', icon: Gamepad2 },
   ]

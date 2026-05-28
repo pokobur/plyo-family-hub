@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gamepad2, HeartHandshake, MessageCircleQuestion } from "lucide-react";
+import { Gamepad2, HeartHandshake, MessageCircleQuestion, Gift } from "lucide-react";
 import SettingsButton from "./SettingsButton";
 
 export default function Header() {
@@ -35,6 +35,10 @@ export default function Header() {
             <HeartHandshake size={18} />
             <span>おすすめアイテム</span>
           </Link>
+          <Link href="/gifts" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+            <Gift size={18} />
+            <span>お譲りボード</span>
+          </Link>
           <Link href="/games" className="flex items-center gap-1.5 hover:text-primary transition-colors">
             <Gamepad2 size={18} />
             <span>子供とあそぶ</span>
@@ -56,10 +60,10 @@ export default function Header() {
       </div>
 
       {/* Mobile Navigation at the top */}
-      <div className="md:hidden flex items-center justify-around border-t border-gray-100/60 bg-white/60 py-2.5 px-2 text-xs font-bold text-gray-500">
+      <div className="md:hidden flex items-center justify-around border-t border-gray-100/60 bg-white/60 py-2.5 px-1.5 text-xs font-bold text-gray-500">
         <Link 
           href="/" 
-          className={`hover:text-primary transition-colors py-1 px-3 rounded-lg ${
+          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
             pathname === '/' ? 'text-primary bg-primary/10' : ''
           }`}
         >
@@ -67,7 +71,7 @@ export default function Header() {
         </Link>
         <Link 
           href="/qa" 
-          className={`hover:text-primary transition-colors py-1 px-3 rounded-lg ${
+          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
             pathname.startsWith('/qa') ? 'text-primary bg-primary/10' : ''
           }`}
         >
@@ -75,15 +79,23 @@ export default function Header() {
         </Link>
         <Link 
           href="/items" 
-          className={`hover:text-primary transition-colors py-1 px-3 rounded-lg ${
+          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
             pathname.startsWith('/items') ? 'text-primary bg-primary/10' : ''
           }`}
         >
           アイテム
         </Link>
         <Link 
+          href="/gifts" 
+          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
+            pathname.startsWith('/gifts') ? 'text-primary bg-primary/10' : ''
+          }`}
+        >
+          お譲り
+        </Link>
+        <Link 
           href="/games" 
-          className={`hover:text-primary transition-colors py-1 px-3 rounded-lg ${
+          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
             pathname.startsWith('/games') ? 'text-primary bg-primary/10' : ''
           }`}
         >
