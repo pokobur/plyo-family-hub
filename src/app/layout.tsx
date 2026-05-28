@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "plyo. family hug - 子育て情報と遊びのポータル",
     description: "育児の悩みを解決する知恵袋や、本当におすすめのアイテムが集まる子育て支援ポータル。",
-    url: "https://family.plyo.blog",
+    url: "https://family-hug.plyo.blog",
     siteName: "plyo. family hug",
     images: [
       {
