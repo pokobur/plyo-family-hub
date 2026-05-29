@@ -24,6 +24,21 @@ export default async function GiftDetailPage({ params }: GiftDetailPageProps) {
   const { data: { user } } = await supabase.auth.getUser();
   const currentUserId = user?.id || null;
 
+  // Fetch applications using authenticated client dynamically (to bypass RLS/caching issues)
+  let applications: any[] = [];
+  if (currentUserId) {
+    const { data: appData } = await supabase
+      .from('gift_applications')
+      .select('*')
+      .eq('gift_item_id', id);
+    applications = appData || [];
+  }
+
+  const itemWithApplications = {
+    ...item,
+    applications,
+  };
+
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6 pb-12">
       {/* Breadcrumbs / Back link */}
@@ -32,7 +47,7 @@ export default async function GiftDetailPage({ params }: GiftDetailPageProps) {
       </Link>
 
       {/* Main Details Wrapper */}
-      <GiftDetailClient item={item} currentUserId={currentUserId} />
+      <GiftDetailClient item={itemWithApplications} currentUserId={currentUserId} />
     </div>
   );
 }

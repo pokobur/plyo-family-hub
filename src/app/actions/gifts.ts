@@ -291,28 +291,7 @@ export async function getGiftItem(id: string) {
         return null
       }
 
-      // Fetch applications
-      const { data: applications, error: appError } = await supabase
-        .from('gift_applications')
-        .select('*')
-        .eq('gift_item_id', id)
-
-      // Fetch messages (only if matched)
-      let messages = []
-      if (item.status !== 'open') {
-        const { data: msgData } = await supabase
-          .from('gift_messages')
-          .select('*')
-          .eq('gift_item_id', id)
-          .order('created_at', { ascending: true })
-        messages = msgData || []
-      }
-
-      return {
-        ...item,
-        applications: applications || [],
-        messages: messages
-      }
+      return item
     },
     ['gift_item', id],
     { tags: [`gift_item-${id}`] }

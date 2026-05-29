@@ -32,9 +32,15 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect paths: /items/new, /qa/new
+  // Protect paths: /items/new, /qa/new, /gifts/new, /gifts/*/chat
   const path = request.nextUrl.pathname
-  if (!user && (path.startsWith('/items/new') || path.startsWith('/qa/new'))) {
+  const isProtectedPath = 
+    path.startsWith('/items/new') || 
+    path.startsWith('/qa/new') || 
+    path.startsWith('/gifts/new') || 
+    (path.startsWith('/gifts/') && path.endsWith('/chat'))
+
+  if (!user && isProtectedPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('next', path)

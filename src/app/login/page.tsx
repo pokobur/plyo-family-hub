@@ -43,8 +43,8 @@ function LoginForm() {
         throw signInError
       }
 
-      router.push(nextRedirect)
-      router.refresh()
+      // Hard redirect using window.location.href to ensure cookies are refreshed and Middleware / Server Components detect the session immediately.
+      window.location.href = nextRedirect
     } catch (err: any) {
       setError(err.message || 'ログイン中にエラーが発生しました。')
       setLoading(false)
@@ -81,8 +81,7 @@ function LoginForm() {
 
       // Check if session exists (i.e. email confirmation is disabled)
       if (data.session) {
-        router.push(nextRedirect)
-        router.refresh()
+        window.location.href = nextRedirect
       } else {
         setSuccessMessage(
           '確認用のメールを送信しました！記載されたリンクをクリックして本登録を完了してください。'
@@ -159,7 +158,11 @@ function LoginForm() {
           </div>
         ) : (
           /* Form Area */
-          <form onSubmit={activeTab === 'login' ? handleLogin : handleSignUp} className="flex flex-col gap-4">
+          <form 
+            onSubmit={activeTab === 'login' ? handleLogin : handleSignUp} 
+            className="flex flex-col gap-4"
+            autoComplete="off"
+          >
             
             {activeTab === 'signup' && (
               <div className="flex flex-col gap-1.5">
@@ -171,6 +174,7 @@ function LoginForm() {
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder="例: たろうパパ、はなママ"
+                    autoComplete="off"
                     className="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-800 text-sm outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                   />
                   <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -187,6 +191,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
+                  autoComplete="off"
                   className="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-800 text-sm outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                 />
                 <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -203,6 +208,7 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   minLength={6}
+                  autoComplete="new-password"
                   className="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-800 text-sm outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                 />
                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />

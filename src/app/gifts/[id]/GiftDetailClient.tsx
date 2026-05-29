@@ -270,7 +270,7 @@ export default function GiftDetailClient({ item, currentUserId }: GiftDetailClie
               {currentUserId && !hasApplied && item.status === 'open' && (
                 <form onSubmit={handleApply} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="font-bold text-gray-700 text-xs">出品者へのメッセージ</label>
+                    <label className="font-bold text-gray-700 text-xs">出品者へのメッセージ（5文字以上）</label>
                     <textarea
                       value={applyMessage}
                       onChange={(e) => setApplyMessage(e.target.value)}
@@ -279,6 +279,9 @@ export default function GiftDetailClient({ item, currentUserId }: GiftDetailClie
                       className="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none font-medium"
                       required
                     ></textarea>
+                    {applyMessage.length > 0 && applyMessage.trim().length < 5 && (
+                      <p className="text-red-500 text-[10px] font-bold">メッセージは5文字以上で入力してください。</p>
+                    )}
                   </div>
                   <button
                     type="submit"

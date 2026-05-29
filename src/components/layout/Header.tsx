@@ -58,50 +58,6 @@ export default function Header() {
           <SettingsButton />
         </div>
       </div>
-
-      {/* Mobile Navigation at the top */}
-      <div className="md:hidden flex items-center justify-around border-t border-gray-100/60 bg-white/60 py-2.5 px-1.5 text-xs font-bold text-gray-500">
-        <Link 
-          href="/" 
-          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
-            pathname === '/' ? 'text-primary bg-primary/10' : ''
-          }`}
-        >
-          ホーム
-        </Link>
-        <Link 
-          href="/qa" 
-          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
-            pathname.startsWith('/qa') ? 'text-primary bg-primary/10' : ''
-          }`}
-        >
-          知恵袋
-        </Link>
-        <Link 
-          href="/items" 
-          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
-            pathname.startsWith('/items') ? 'text-primary bg-primary/10' : ''
-          }`}
-        >
-          アイテム
-        </Link>
-        <Link 
-          href="/gifts" 
-          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
-            pathname.startsWith('/gifts') ? 'text-primary bg-primary/10' : ''
-          }`}
-        >
-          お譲り
-        </Link>
-        <Link 
-          href="/games" 
-          className={`hover:text-primary transition-colors py-1 px-2.5 rounded-lg ${
-            pathname.startsWith('/games') ? 'text-primary bg-primary/10' : ''
-          }`}
-        >
-          あそぶ
-        </Link>
-      </div>
     </header>
   );
 }

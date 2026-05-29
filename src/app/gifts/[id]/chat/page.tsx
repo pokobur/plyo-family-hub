@@ -34,9 +34,25 @@ export default async function GiftChatPage({ params }: GiftChatPageProps) {
     redirect(`/gifts/${id}`);
   }
 
+  // Fetch messages dynamically using authenticated client
+  let messages: any[] = [];
+  if (item.status !== 'open') {
+    const { data: msgData } = await supabase
+      .from('gift_messages')
+      .select('*')
+      .eq('gift_item_id', id)
+      .order('created_at', { ascending: true });
+    messages = msgData || [];
+  }
+
+  const itemWithMessages = {
+    ...item,
+    messages,
+  };
+
   return (
     <div className="py-2">
-      <GiftChatClient item={item} currentUserId={user.id} />
+      <GiftChatClient item={itemWithMessages} currentUserId={user.id} />
     </div>
   );
 }

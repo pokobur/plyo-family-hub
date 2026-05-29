@@ -147,3 +147,31 @@ with check (
     )
   )
 );
+
+-- Enable Realtime for Chat Messages
+alter publication supabase_realtime add table public.gift_messages;
+
+-- 5. Create Storage Bucket for Gift Images
+insert into storage.buckets (id, name, public)
+values ('gift-images', 'gift-images', true)
+on conflict (id) do nothing;
+
+-- Set up Storage Policies for 'gift-images'
+create policy "Allow public read access on gift-images"
+  on storage.objects for select
+  using ( bucket_id = 'gift-images' );
+
+create policy "Allow auth insert access on gift-images"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'gift-images' 
+    and auth.role() = 'authenticated'
+  );
+
+create policy "Allow owner delete access on gift-images"
+  on storage.objects for delete
+  using (
+    bucket_id = 'gift-images' 
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
