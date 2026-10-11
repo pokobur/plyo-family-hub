@@ -107,7 +107,7 @@ function LoginForm() {
           <p className="text-xs text-gray-500 font-medium mt-1.5">
             {activeTab === 'login' 
               ? '知恵袋への回答や、おすすめアイテムの投稿にはログインが必要です。' 
-              : 'Plyo Family Hugに登録して、みんなと子育てを支え合いましょう！'}
+              : 'family-hug（ファミリーハグ）に登録して、みんなと子育てを支え合いましょう！'}
           </p>
         </div>
 

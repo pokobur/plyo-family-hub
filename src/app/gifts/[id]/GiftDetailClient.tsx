@@ -66,7 +66,7 @@ export default function GiftDetailClient({ item, currentUserId }: GiftDetailClie
       <div className="lg:col-span-2 flex flex-col gap-6">
         {/* Images Area */}
         <div className="flex flex-col gap-3">
-          <div className="aspect-square w-full rounded-[2rem] overflow-hidden bg-gray-50 border border-gray-100 shadow-xs relative">
+          <div className="aspect-square w-full rounded-2xl overflow-hidden bg-stone-50 border border-stone-200 shadow-2xs relative">
             <img 
               src={imagesList[activeImage]} 
               alt={item.title} 
@@ -91,17 +91,17 @@ export default function GiftDetailClient({ item, currentUserId }: GiftDetailClie
         </div>
 
         {/* Description Panel */}
-        <div className="glass-panel p-6 md:p-8 rounded-3xl border border-primary/10 flex flex-col gap-6">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="bg-primary/10 text-primary-dark text-xs font-black px-2.5 py-1 rounded-full">
+              <span className="bg-primary-light text-primary text-xs font-bold px-2.5 py-0.5 rounded-md">
                 {item.category}
               </span>
-              <span className="text-xs text-gray-500 font-bold">
-                商品の状態: <span className="text-gray-700">{item.condition}</span>
+              <span className="text-xs text-stone-500 font-medium">
+                状態: <span className="text-stone-800 font-bold">{item.condition}</span>
               </span>
             </div>
-            <h1 className="text-xl md:text-2xl font-black text-gray-800 leading-tight mt-1">{item.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-stone-900 leading-snug mt-1">{item.title}</h1>
           </div>
 
           <div className="border-t border-gray-100 pt-5">
@@ -139,11 +139,10 @@ export default function GiftDetailClient({ item, currentUserId }: GiftDetailClie
       {/* Right Column - Deal Interaction Box */}
       <div className="flex flex-col gap-6">
         {/* Deal Status Card */}
-        <div className="glass-panel p-6 rounded-3xl border border-primary/20 shadow-xs flex flex-col gap-5 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-primary"></div>
-          
-          <h3 className="font-black text-gray-800 text-sm border-b border-gray-100 pb-3 flex items-center gap-1.5">
-            <Gift size={18} className="text-primary fill-primary" /> お譲り取引の状況
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-2xs flex flex-col gap-5">
+          <h3 className="font-bold text-stone-900 text-sm border-b border-stone-100 pb-3 flex items-center gap-2">
+            <Gift size={16} className="text-secondary" /> 
+            <span>お譲り取引の状況</span>
           </h3>
 
           {error && (

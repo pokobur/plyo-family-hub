@@ -198,6 +198,27 @@ export async function sendGiftMessage(giftItemId: string, text: string) {
     throw new Error('メッセージ内容が空です。')
   }
 
+  // Authorize participant: must be owner or selected receiver
+  const { data: item, error: itemError } = await supabase
+    .from('gift_items')
+    .select('user_id, selected_receiver_id, status')
+    .eq('id', giftItemId)
+    .single()
+
+  if (itemError || !item) {
+    throw new Error('お譲りアイテムが見つかりませんでした。')
+  }
+
+  if (item.status === 'completed') {
+    throw new Error('この取引は既に完了しているためメッセージを送信できません。')
+  }
+
+  const isOwner = item.user_id === user.id
+  const isReceiver = item.selected_receiver_id === user.id
+  if (!isOwner && !isReceiver) {
+    throw new Error('この取引メッセージを送信する権限がありません。')
+  }
+
   const { error } = await supabase
     .from('gift_messages')
     .insert({
@@ -264,7 +285,7 @@ export async function getGiftItems() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching gift items:', error)
+        console.error('Error fetching gift items:', error.message || error)
         return []
       }
       return data

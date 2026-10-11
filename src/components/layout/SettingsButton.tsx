@@ -2,53 +2,50 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Settings, X, Shield, Check, Trash2, Key, User as UserIcon, LogIn, LogOut, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { Settings, X, User as UserIcon, LogIn, LogOut, ChevronRight, Edit3, Check, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SettingsButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isLargeText, setIsLargeText] = useState(false);
-  const [pin, setPin] = useState("");
-  const [inputPin, setInputPin] = useState("");
-  const [confirmPin, setConfirmPin] = useState("");
-  const [isSettingPin, setIsSettingPin] = useState(false);
-  const [pinMessage, setPinMessage] = useState("");
-  const [pinError, setPinError] = useState("");
   const [user, setUser] = useState<any>(null);
   const [currentPath, setCurrentPath] = useState("/");
+  const [nickname, setNickname] = useState("");
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
-  // Hydration safety: only read from localStorage / document on client
   useEffect(() => {
     setMounted(true);
-    // Read text size setting
     const savedTextSize = localStorage.getItem("large_text") === "true";
     if (savedTextSize) {
       document.documentElement.style.fontSize = "18px";
     }
 
-    // Read PIN setting
-    const savedPin = localStorage.getItem("parental_pin") || "";
-
-    // Set current path for login redirect
     if (typeof window !== "undefined") {
       setCurrentPath(window.location.pathname);
     }
 
-    // Get initial auth session and listen to changes
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
+      if (user) {
+        setNickname(user.user_metadata?.nickname || user.email?.split('@')[0] || "");
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        setNickname(u.user_metadata?.nickname || u.email?.split('@')[0] || "");
+      }
     });
 
-    // Defer state updates to avoid React 19 cascading renders lint warning
     const timer = setTimeout(() => {
       setIsLargeText(savedTextSize);
-      setPin(savedPin);
     }, 0);
 
     return () => {
@@ -57,7 +54,6 @@ export default function SettingsButton() {
     };
   }, []);
 
-  // Handle Text Size Toggle
   const toggleTextSize = () => {
     const newVal = !isLargeText;
     setIsLargeText(newVal);
@@ -65,42 +61,24 @@ export default function SettingsButton() {
     document.documentElement.style.fontSize = newVal ? "18px" : "16px";
   };
 
-  // Handle PIN Setting
-  const handleSetPinSubmit = (e: React.FormEvent) => {
+  const handleUpdateNickname = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputPin.length !== 4 || !/^\d+$/.test(inputPin)) {
-      setPinError("4桁の数字を入力してください");
-      return;
-    }
-    if (inputPin !== confirmPin) {
-      setPinError("PINコードが一致しません");
-      return;
-    }
+    if (!nickname.trim() || nicknameSaving) return;
 
-    localStorage.setItem("parental_pin", inputPin);
-    setPin(inputPin);
-    setIsSettingPin(false);
-    setInputPin("");
-    setConfirmPin("");
-    setPinError("");
-    setPinMessage("PINコードを設定しました");
-    setTimeout(() => setPinMessage(""), 3000);
+    setNicknameSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({
+      data: { nickname: nickname.trim() }
+    });
+
+    if (!error) {
+      setIsEditingNickname(false);
+      setSuccessMsg("ニックネームを保存しました");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    }
+    setNicknameSaving(false);
   };
 
-  // Handle PIN Removal
-  const handleRemovePin = () => {
-    const verify = prompt("現在の4桁のPINコードを入力してください:");
-    if (verify === pin) {
-      localStorage.removeItem("parental_pin");
-      setPin("");
-      setPinMessage("PINコードを解除しました");
-      setTimeout(() => setPinMessage(""), 3000);
-    } else if (verify !== null) {
-      alert("PINコードが正しくありません");
-    }
-  };
-
-  // Handle Sign Out
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -110,98 +88,129 @@ export default function SettingsButton() {
 
   return (
     <>
-      {/* Settings Gear Button */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="p-2 text-gray-400 hover:text-primary bg-gray-100 hover:bg-gray-200 rounded-full transition-all hover:rotate-45"
+        className="p-2.5 text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/80 rounded-xl transition-all cursor-pointer flex items-center justify-center"
         aria-label="設定"
       >
-        <Settings size={20} />
+        <Settings size={18} />
       </button>
 
       {mounted && typeof document !== "undefined" && createPortal(
         <>
-          {/* Drawer Overlay Backdrop */}
           {isOpen && (
             <div 
-              className="fixed inset-0 bg-black/40 z-50 transition-opacity animate-fade-in backdrop-blur-xs"
+              className="fixed inset-0 bg-stone-900/30 z-50 transition-opacity animate-fade-in backdrop-blur-xs"
               onClick={() => setIsOpen(false)}
             />
           )}
 
-          {/* Settings Drawer Panel */}
           <div 
-            className={`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-all duration-300 ease-out flex flex-col ${
+            className={`fixed top-0 right-0 h-full w-full max-w-md bg-stone-50 shadow-xl z-50 transform transition-all duration-300 ease-out flex flex-col border-l border-stone-200 ${
               isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none invisible"
             }`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <Settings className="text-primary animate-spin-slow" size={22} />
-                <h2 className="font-black text-lg text-gray-800">設定メニュー</h2>
+            <div className="flex items-center justify-between p-5 bg-white border-b border-stone-200">
+              <div className="flex items-center gap-2 text-stone-800">
+                <Settings className="text-primary" size={20} />
+                <h2 className="font-bold text-base">メニュー & 設定</h2>
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors cursor-pointer"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
               
-              {/* Section 1: User Account */}
-              <div className="flex flex-col gap-4">
+              {/* Account Section */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">アカウント</h3>
+                
                 {user ? (
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">アカウント</h3>
-                ) : (
-                  <a
-                    href={`/login?next=${encodeURIComponent(currentPath)}`}
-                    onClick={() => setIsOpen(false)}
-                    className="text-xs font-bold text-gray-600 hover:text-primary uppercase tracking-wider flex items-center justify-between transition-colors group cursor-pointer"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      アカウント
-                      <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-normal normal-case">
-                        未ログイン
-                      </span>
-                    </span>
-                    <span className="text-[10px] text-gray-400 group-hover:text-primary transition-colors flex items-center gap-0.5 font-normal normal-case">
-                      ログインはこちら <ChevronRight size={12} />
-                    </span>
-                  </a>
-                )}
-                {user ? (
-                  <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-primary/10 text-primary p-2.5 rounded-xl shrink-0">
-                        <UserIcon size={20} className="fill-primary/10" />
+                  <div className="bg-white p-4 rounded-xl border border-stone-200 flex flex-col gap-4 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                          {user.user_metadata?.nickname?.[0] || 'パ'}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm text-stone-800 truncate">
+                            {user.user_metadata?.nickname || user.email?.split('@')[0] || '家族メンバー'}
+                          </h4>
+                          <p className="text-xs text-stone-400 truncate">{user.email}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-sm text-gray-800 truncate">
-                          {user.user_metadata?.nickname || user.email?.split('@')[0] || 'ファミリーメンバー'}
-                        </h4>
-                        <p className="text-[11px] text-gray-400 font-medium truncate mt-0.5">{user.email}</p>
-                      </div>
+                      <button
+                        onClick={() => setIsEditingNickname(!isEditingNickname)}
+                        className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors cursor-pointer"
+                        title="名前を変更"
+                      >
+                        <Edit3 size={16} />
+                      </button>
                     </div>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 border border-red-100 transition-colors cursor-pointer"
-                    >
-                      <LogOut size={14} /> ログアウト
-                    </button>
+
+                    {isEditingNickname && (
+                      <form onSubmit={handleUpdateNickname} className="pt-3 border-t border-stone-100 flex flex-col gap-2">
+                        <label className="text-xs font-medium text-stone-600">表示ニックネーム</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            placeholder="ニックネームを入力"
+                            className="flex-1 bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5 text-xs text-stone-800 focus:outline-none focus:border-primary"
+                            maxLength={30}
+                            required
+                          />
+                          <button
+                            type="submit"
+                            disabled={nicknameSaving}
+                            className="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                          >
+                            保存
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {successMsg && (
+                      <div className="text-xs font-bold text-emerald-700 bg-emerald-50 p-2 rounded-lg flex items-center gap-1.5 border border-emerald-100">
+                        <Check size={14} /> {successMsg}
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t border-stone-100 flex flex-col gap-2">
+                      <Link
+                        href="/mypage"
+                        onClick={() => setIsOpen(false)}
+                        className="py-2.5 px-3 bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-bold rounded-lg flex items-center justify-between transition-colors"
+                      >
+                        <span>マイページ（投稿・取引履歴）</span>
+                        <ChevronRight size={14} className="text-stone-400" />
+                      </Link>
+
+                      <button
+                        onClick={handleSignOut}
+                        className="py-2 px-3 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <LogOut size={14} /> ログアウト
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col gap-3 text-center">
-                    <p className="text-xs text-gray-500 font-bold">
-                      ログインすると、知恵袋の投稿やおすすめアイテムのシェアができます。
+                  <div className="bg-white p-4 rounded-xl border border-stone-200 flex flex-col gap-3 text-center shadow-2xs">
+                    <p className="text-xs text-stone-600 leading-relaxed">
+                      ログインすると、知恵袋への投稿や回答、おすすめアイテムの紹介、お譲りへの応募ができるようになります。
                     </p>
                     <a
                       href={`/login?next=${encodeURIComponent(currentPath)}`}
                       onClick={() => setIsOpen(false)}
-                      className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                      className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                     >
                       <LogIn size={14} /> ログイン / 新規登録
                     </a>
@@ -209,124 +218,54 @@ export default function SettingsButton() {
                 )}
               </div>
 
-              {/* Section 2: Display Settings */}
-              <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">表示設定</h3>
-                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
+              {/* Display Settings */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">アクセシビリティ</h3>
+                <div className="bg-white p-4 rounded-xl border border-stone-200 flex items-center justify-between shadow-2xs">
                   <div>
-                    <h4 className="font-bold text-sm text-gray-800">文字サイズ（拡大）</h4>
-                    <p className="text-[11px] text-gray-400 font-medium mt-0.5">アプリ全体の文字を大きく表示します</p>
+                    <h4 className="font-bold text-sm text-stone-800">文字サイズ拡大</h4>
+                    <p className="text-xs text-stone-400 mt-0.5">画面全体の文字を大きく読みやすくします</p>
                   </div>
                   <button
                     onClick={toggleTextSize}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${
-                      isLargeText ? "bg-primary" : "bg-gray-300"
+                    className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 cursor-pointer ${
+                      isLargeText ? "bg-primary" : "bg-stone-200"
                     }`}
                   >
-                    <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
-                      isLargeText ? "translate-x-6" : "translate-x-0"
+                    <div className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform duration-200 ${
+                      isLargeText ? "translate-x-5" : "translate-x-0"
                     }`} />
                   </button>
                 </div>
               </div>
 
-              {/* Section 3: Parental Control PIN */}
-              <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">ペアレンタルコントロール</h3>
-                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-blue-100 text-blue-600 p-2.5 rounded-xl mt-0.5">
-                      <Shield size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-gray-800">保護者向け暗証番号（PIN）</h4>
-                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">子供用ゲームのロック解除や設定保護に利用します</p>
-                    </div>
-                  </div>
-
-                  {pinMessage && (
-                    <div className="bg-green-50 text-green-700 text-xs font-bold p-3 rounded-xl border border-green-100 flex items-center gap-1.5">
-                      <Check size={14} /> {pinMessage}
-                    </div>
-                  )}
-
-                  {/* Setting flow / Status */}
-                  {pin ? (
-                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-200/50">
-                      <div className="flex items-center justify-between text-xs font-bold text-gray-600">
-                        <span className="flex items-center gap-1"><Key size={14} className="text-green-500" /> PINコード有効</span>
-                        <span>****</span>
-                      </div>
-                      <button
-                        onClick={handleRemovePin}
-                        className="w-full mt-2 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 border border-red-100 transition-colors"
-                      >
-                        <Trash2 size={14} /> PINコードを解除する
-                      </button>
-                    </div>
-                  ) : isSettingPin ? (
-                    <form onSubmit={handleSetPinSubmit} className="flex flex-col gap-3 pt-2 border-t border-gray-200/50">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-gray-600">新しい4桁 of PINを入力</label>
-                        <input
-                          type="password"
-                          maxLength={4}
-                          value={inputPin}
-                          onChange={(e) => setInputPin(e.target.value.replace(/\D/g, ""))}
-                          placeholder="数字4桁"
-                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 font-mono text-center tracking-widest"
-                          required
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-gray-600">PINの確認</label>
-                        <input
-                          type="password"
-                          maxLength={4}
-                          value={confirmPin}
-                          onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
-                          placeholder="もう一度入力"
-                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 font-mono text-center tracking-widest"
-                          required
-                        />
-                      </div>
-                      {pinError && <p className="text-red-500 text-xs font-bold">{pinError}</p>}
-                      
-                      <div className="flex gap-2 justify-end mt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsSettingPin(false);
-                            setPinError("");
-                            setInputPin("");
-                            setConfirmPin("");
-                          }}
-                          className="px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-700"
-                        >
-                          キャンセル
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 shadow-sm"
-                        >
-                          設定する
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <button
-                      onClick={() => setIsSettingPin(true)}
-                      className="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl border border-blue-100 transition-colors"
-                    >
-                      PINコードを設定する
-                    </button>
-                  )}
+              {/* App links */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">リンク</h3>
+                <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100 overflow-hidden shadow-2xs">
+                  <a 
+                    href="https://plyo.blog" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-3.5 flex items-center justify-between text-xs font-bold text-stone-700 hover:bg-stone-50 transition-colors"
+                  >
+                    <span>plyo.blog（子育て専門メディア）</span>
+                    <ChevronRight size={14} className="text-stone-400" />
+                  </a>
+                  <Link
+                    href="/games"
+                    onClick={() => setIsOpen(false)}
+                    className="p-3.5 flex items-center justify-between text-xs font-bold text-stone-700 hover:bg-stone-50 transition-colors"
+                  >
+                    <span>子供とあそぶ知育ゲーム一覧</span>
+                    <ChevronRight size={14} className="text-stone-400" />
+                  </Link>
                 </div>
               </div>
 
-              {/* Section 4: App info */}
-              <div className="mt-auto pt-6 border-t border-gray-100 text-center flex flex-col gap-1 text-[11px] text-gray-400 font-medium">
-                <span>plyo. family hug v1.0.0</span>
+              {/* Footer info */}
+              <div className="mt-auto pt-6 border-t border-stone-200 text-center flex flex-col gap-1 text-[11px] text-stone-400 font-medium">
+                <span>family-hug v1.1.0</span>
                 <span>&copy; {new Date().getFullYear()} plyo.blog</span>
               </div>
 

@@ -74,7 +74,7 @@ export async function getQuestions() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching questions:', error)
+        console.error('Error fetching questions:', error.message || error)
         return []
       }
       return data

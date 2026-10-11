@@ -16,7 +16,7 @@ export default function MobileNav() {
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-[calc(10px+env(safe-area-inset-bottom,0px))] left-4 right-4 max-w-md mx-auto bg-white/95 backdrop-blur-md border border-gray-200/60 flex justify-around items-stretch z-40 h-14 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] overflow-hidden">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-200/90 flex justify-around items-stretch z-40 h-16 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
       {navItems.map((item) => {
         const Icon = item.icon
         const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
@@ -25,21 +25,21 @@ export default function MobileNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors duration-200 cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
               isActive 
                 ? 'text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-stone-400 hover:text-stone-600'
             }`}
           >
             <Icon 
               size={20} 
-              className={`transition-all duration-200 ${
+              className={`transition-transform ${
                 isActive 
-                  ? 'stroke-[2.5px] scale-105' 
-                  : 'stroke-[2px]'
+                  ? 'stroke-[2.2px] scale-105' 
+                  : 'stroke-[1.8px]'
               }`} 
             />
-            <span className={`text-[10px] tracking-tight ${isActive ? 'font-bold' : 'font-medium'}`}>
+            <span className={`text-[10px] tracking-tight ${isActive ? 'font-bold' : 'font-medium text-stone-500'}`}>
               {item.label}
             </span>
           </Link>

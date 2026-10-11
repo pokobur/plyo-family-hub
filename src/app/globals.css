@@ -3,41 +3,70 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #ff7e67;
-  --color-primary-dark: #e06c57;
-  --color-secondary: #ffc107;
-  --color-accent: #a1c4fd;
-  --color-accent-dark: #c2e9fb;
-  --color-card: rgba(255, 255, 255, 0.95);
   
-  --font-sans: var(--font-mplus), ui-sans-serif, system-ui, sans-serif;
+  /* 温かみのあるアーステラコッタ（親しみやすさと信頼感） */
+  --color-primary: #d9654b;
+  --color-primary-dark: #be5138;
+  --color-primary-light: #f7ede8;
+  
+  /* 落ち着いたハニーアンバー（温もりとアクセント） */
+  --color-secondary: #df9e38;
+  --color-secondary-dark: #c28222;
+  --color-secondary-light: #fbf4ea;
+  
+  /* セージグリーン（安心感・健康・自然） */
+  --color-accent: #608066;
+  --color-accent-light: #edf3ee;
+  
+  --color-card: #ffffff;
+  
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", "Noto Sans JP", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 :root {
-  --background: #fdfdfd;
-  --foreground: #333333;
+  --background: #fbfaf8;
+  --foreground: #2b2725;
 }
 
 body {
   background-color: var(--background);
-  background-image: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100vh;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Glassmorphism utilities */
+/* 清潔感と上質感のあるカード（過剰なグラスモーフィズムを脱却） */
+.clean-card {
+  background-color: var(--color-card);
+  border: 1px solid #e7e5e4;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+}
+
 .glass-panel {
-  background: var(--color-card);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(231, 229, 228, 0.8);
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.03);
 }
 
+/* 上品で自然なホバーインタラクション */
 .hover-lift {
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease-out;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease-out, border-color 0.18s ease-out;
 }
 .hover-lift:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -2px rgba(43, 39, 37, 0.06);
+}
+
+/* スクロールバーの軽量化 */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #d6d3d1;
+  border-radius: 9999px;
 }

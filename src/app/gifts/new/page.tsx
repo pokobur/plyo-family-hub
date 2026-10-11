@@ -154,16 +154,14 @@ export default function NewGiftPage() {
         <ArrowLeft size={16} /> アイテム一覧に戻る
       </Link>
 
-      <div className="bg-white p-8 md:p-10 rounded-[2rem] border border-primary/20 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-2.5 h-full bg-primary"></div>
-
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-primary/10 text-primary p-3 rounded-2xl">
-            <Gift size={28} className="fill-primary" />
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-stone-100">
+          <div className="bg-secondary-light text-secondary p-2.5 rounded-xl shrink-0">
+            <Gift size={22} className="fill-secondary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-800">お譲りアイテムを投稿する</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">使わなくなった子供用品を登録して、次のパパママへギフトしましょう。</p>
+            <h1 className="text-xl font-bold text-stone-900">お譲りアイテムを投稿する</h1>
+            <p className="text-xs text-stone-500 font-medium mt-0.5">使わなくなった子供用品を登録して、次のパパママへギフトしましょう。</p>
           </div>
         </div>
 

@@ -105,6 +105,34 @@ function decodeHtmlEntities(str: string): string {
     .trim();
 }
 
+function isSafePublicUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    // Block localhost, loopback, private IP ranges, link-local, cloud metadata
+    if (
+      host === 'localhost' ||
+      host.endsWith('.local') ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host === '0.0.0.0' ||
+      host === '169.254.169.254' ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+      /^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function searchProducts(keyword: string) {
   if (!keyword || keyword.trim() === '') {
     return [];
@@ -114,6 +142,11 @@ export async function searchProducts(keyword: string) {
 
   // Direct URL detection and OpenGraph metadata extraction
   if (trimmedKeyword.startsWith('http://') || trimmedKeyword.startsWith('https://')) {
+    if (!isSafePublicUrl(trimmedKeyword)) {
+      console.warn(`[SSRF Prevention] Blocked dangerous or non-public URL: ${trimmedKeyword}`);
+      return [];
+    }
+
     let platform = '楽天';
     if (trimmedKeyword.includes('amazon.co.jp') || trimmedKeyword.includes('amzn.to')) {
       platform = 'Amazon';
@@ -121,6 +154,7 @@ export async function searchProducts(keyword: string) {
 
     try {
       const res = await fetch(trimmedKeyword, {
+        signal: AbortSignal.timeout(6000),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept-Language': 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -225,7 +259,7 @@ export async function getItems() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching items:', error)
+        console.error('Error fetching items:', error.message || error)
         return []
       }
       return data

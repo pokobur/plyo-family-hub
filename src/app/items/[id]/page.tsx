@@ -1,8 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { Star, ExternalLink, Heart, MessageSquare, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Star, ExternalLink, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/components/shared/ShareButton";
+import LikeButton from "@/components/shared/LikeButton";
 import { getItem } from "@/app/actions/items";
+import { checkUserLiked } from "@/app/actions/likes";
 import { notFound } from "next/navigation";
 
 export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -13,79 +15,92 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
     notFound();
   }
 
-  const platformStyles = {
-    Amazon: "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/30",
-    "楽天": "bg-red-500 hover:bg-red-600 text-white shadow-red-500/30",
-    "plyo.blog": "bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/30",
-    "その他": "bg-gray-500 hover:bg-gray-600 text-white shadow-gray-500/30",
+  const isLiked = await checkUserLiked(itemData.id, 'item');
+
+  const platformButtonStyles: Record<string, string> = {
+    Amazon: "bg-[#e89138] hover:bg-[#d07b27] text-white shadow-xs",
+    "楽天": "bg-[#bf3b3b] hover:bg-[#a82e2e] text-white shadow-xs",
+    "plyo.blog": "bg-stone-800 hover:bg-stone-900 text-white shadow-xs",
+    "その他": "bg-stone-800 hover:bg-stone-900 text-white shadow-xs",
   };
 
   const date = new Date(itemData.created_at);
   const formattedDate = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-
-  const platformKey = itemData.platform in platformStyles ? itemData.platform : 'その他';
+  const btnStyle = platformButtonStyles[itemData.platform] || platformButtonStyles["その他"];
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-10">
-      <Link href="/items" className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors w-fit font-bold">
-        <ArrowLeft size={16} /> おすすめアイテム一覧に戻る
+    <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-12">
+      <Link 
+        href="/items" 
+        className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors w-fit"
+      >
+        <ArrowLeft size={15} /> おすすめアイテム一覧に戻る
       </Link>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-2xs">
         <div className="flex flex-col md:flex-row">
           
           {/* Image Section */}
-          <div className="md:w-1/2 h-64 md:h-auto bg-gray-50 relative p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
+          <div className="md:w-1/2 h-64 md:h-auto bg-stone-50 relative p-6 flex items-center justify-center border-b md:border-b-0 md:border-r border-stone-200">
             <img 
               src={itemData.image_url || "https://images.unsplash.com/photo-1584824486516-0555a07fc511?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} 
               alt={itemData.title} 
-              className="max-h-full max-w-full object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500 rounded-lg"
+              className="max-h-60 max-w-full object-contain rounded-xl drop-shadow-sm"
             />
             <div className="absolute top-4 left-4">
-              <span className="text-xs font-bold bg-white text-gray-700 px-3 py-1 rounded-full shadow-sm border border-gray-100">
+              <span className="text-xs font-bold bg-white text-stone-700 px-3 py-1 rounded-full shadow-2xs border border-stone-200">
                 {itemData.category}
               </span>
             </div>
           </div>
 
           {/* Content Section */}
-          <div className="md:w-1/2 p-8 flex flex-col">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex gap-1 text-secondary">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className={i < Math.floor(itemData.rating) ? "fill-secondary" : "fill-transparent"} />
-                ))}
-                <span className="text-sm text-gray-500 font-bold ml-2">{itemData.rating}</span>
+          <div className="md:w-1/2 p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-1.5 text-secondary mb-3">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      size={16} 
+                      className={i < Math.floor(itemData.rating) ? "fill-secondary text-secondary" : "text-stone-200"} 
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-stone-500 font-bold ml-1">おすすめ度: {itemData.rating}</span>
               </div>
-            </div>
 
-            <h1 className="text-2xl font-black text-gray-800 leading-tight mb-6">
-              {itemData.title}
-            </h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 leading-snug mb-4">
+                {itemData.title}
+              </h1>
 
-            <div className="flex items-center gap-3 mb-6 bg-gray-50 p-4 rounded-2xl">
-              <div className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-full flex items-center justify-center text-lg">👤</div>
-              <div>
-                <div className="text-xs text-gray-500 mb-0.5 font-medium">おすすめした人</div>
-                <div className="font-bold text-gray-700 text-sm">{itemData.author} <span className="font-normal text-gray-400 ml-2">{formattedDate}</span></div>
+              <div className="flex items-center gap-2.5 mb-6 py-2 border-y border-stone-100">
+                <div className="w-8 h-8 bg-stone-100 text-stone-700 rounded-full flex items-center justify-center text-xs font-bold">
+                  {itemData.author?.[0] || "パ"}
+                </div>
+                <div>
+                  <div className="text-[10px] text-stone-400 font-medium">おすすめした人</div>
+                  <div className="font-bold text-xs text-stone-700">{itemData.author} <span className="font-normal text-stone-400 ml-2">{formattedDate}</span></div>
+                </div>
               </div>
-            </div>
 
-            <div className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-wrap flex-1 mb-8">
-              {itemData.description}
+              <div className="text-stone-700 leading-relaxed text-sm whitespace-pre-wrap mb-8">
+                {itemData.description}
+              </div>
             </div>
 
             {/* Affiliate CTA */}
-            <div className="mt-auto flex flex-col gap-3">
+            <div className="flex flex-col gap-2 pt-4 border-t border-stone-100">
               <a 
                 href={itemData.affiliate_url || itemData.original_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-full py-4 rounded-xl font-black text-center shadow-lg hover-lift transition-all flex justify-center items-center gap-2 ${platformStyles[platformKey as keyof typeof platformStyles]}`}
+                className={`w-full py-3.5 rounded-xl font-bold text-sm text-center transition-all flex justify-center items-center gap-2 cursor-pointer ${btnStyle}`}
               >
-                {itemData.platform === "その他" ? "詳細を見る" : `${itemData.platform} で詳細を見る`} <ExternalLink size={18} />
+                {itemData.platform === "その他" ? "商品ページを見る" : `${itemData.platform} で詳細を見る`} 
+                <ExternalLink size={16} />
               </a>
-              <p className="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1">
+              <p className="text-[10px] text-stone-400 text-center flex items-center justify-center gap-1">
                 <ShieldCheck size={12} /> アフィリエイトリンクを利用しています
               </p>
             </div>
@@ -94,18 +109,21 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {/* Engagement actions */}
-      <div className="flex items-center justify-between px-2">
-        <div className="flex gap-4">
-          <button className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-500 transition-colors bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-full hover-lift">
-            <Heart size={18} className="text-gray-400" /> 参考になった ({itemData.likes})
-          </button>
-          <ShareButton 
-            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-500 transition-colors bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-full hover-lift" 
-            size={18} 
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-3">
+          <LikeButton
+            targetId={itemData.id}
+            type="item"
+            initialLikes={itemData.likes || 0}
+            initialIsLiked={isLiked}
+            label="参考になった"
+            className="px-4 py-2 rounded-xl text-xs sm:text-sm"
+            size={17}
           />
-        </div>
-        <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-          <MessageSquare size={18} /> 0 件のコメント
+          <ShareButton 
+            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-stone-600 hover:text-stone-900 bg-white border border-stone-200 shadow-2xs px-4 py-2 rounded-xl cursor-pointer" 
+            size={16} 
+          />
         </div>
       </div>
 

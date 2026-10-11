@@ -175,3 +175,46 @@ create policy "Allow owner delete access on gift-images"
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
+-- 6. User Profiles Table
+create table if not exists public.profiles (
+  id uuid references auth.users(id) on delete cascade primary key,
+  nickname text not null default '家族メンバー',
+  avatar_url text,
+  bio text,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.profiles enable row level security;
+create policy "Allow public read access on profiles" on public.profiles for select using (true);
+create policy "Allow users to update own profile" on public.profiles for update using (auth.uid() = id);
+create policy "Allow users to insert own profile" on public.profiles for insert with check (auth.uid() = id);
+
+-- 7. Likes Tables (Robust 1-like-per-user design)
+create table if not exists public.question_likes (
+  id uuid default uuid_generate_v4() primary key,
+  question_id uuid references public.questions(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(question_id, user_id)
+);
+
+create table if not exists public.item_likes (
+  id uuid default uuid_generate_v4() primary key,
+  item_id uuid references public.items(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(item_id, user_id)
+);
+
+alter table public.question_likes enable row level security;
+alter table public.item_likes enable row level security;
+
+create policy "Allow public read on question_likes" on public.question_likes for select using (true);
+create policy "Allow auth user insert on question_likes" on public.question_likes for insert with check (auth.uid() = user_id);
+create policy "Allow auth user delete own question_likes" on public.question_likes for delete using (auth.uid() = user_id);
+
+create policy "Allow public read on item_likes" on public.item_likes for select using (true);
+create policy "Allow auth user insert on item_likes" on public.item_likes for insert with check (auth.uid() = user_id);
+create policy "Allow auth user delete own item_likes" on public.item_likes for delete using (auth.uid() = user_id);
+
+

@@ -100,16 +100,14 @@ function NewItemPageContent() {
         <ArrowLeft size={16} /> アイテム一覧に戻る
       </Link>
 
-      <div className="bg-white p-8 md:p-10 rounded-[2rem] border border-primary/20 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
-
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-primary/10 text-primary p-3 rounded-2xl">
-            <Heart size={28} className="fill-primary" />
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-stone-100">
+          <div className="bg-primary-light text-primary p-2.5 rounded-xl shrink-0">
+            <Heart size={22} className="fill-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-800">おすすめアイテムを共有する</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">「買ってよかった！」と思うおすすめアイテムをパパママ仲間にシェアしましょう。</p>
+            <h1 className="text-xl font-bold text-stone-900">おすすめアイテムを共有する</h1>
+            <p className="text-xs text-stone-500 font-medium mt-0.5">「買ってよかった！」と思うおすすめアイテムをパパママ仲間にシェアしましょう。</p>
           </div>
         </div>
 
