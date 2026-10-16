@@ -1,10 +1,11 @@
 'use client'
 
-import { ArrowLeft, Heart, Search, Info, Star, ShoppingBag, Check } from "lucide-react";
+import { ArrowLeft, Heart, Search, Info, Star, Check } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createItem, searchProducts } from "@/app/actions/items";
+import { ITEM_CATEGORIES, FALLBACK_IMAGES } from "@/lib/constants";
 
 function NewItemPageContent() {
   const [state, formAction, isPending] = useActionState(createItem, { message: "", errors: {} });
@@ -234,7 +235,7 @@ function NewItemPageContent() {
                         src={itemImageUrl} 
                         alt="プレビュー" 
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80";
+                          (e.target as HTMLImageElement).src = FALLBACK_IMAGES.GIFT;
                         }}
                         className="w-16 h-16 object-cover rounded-md border border-gray-200 shrink-0" 
                       />
@@ -289,10 +290,10 @@ function NewItemPageContent() {
             <div className="flex flex-col gap-2">
               <label className="font-bold text-gray-700 text-sm">カテゴリ <span className="text-red-500">*</span></label>
               <div className="flex flex-wrap gap-2">
-                {['知育・おもちゃ', '時短・家事', '寝かしつけ', 'お出かけ', '離乳食・食事', 'マタニティ', 'その他'].map(cat => (
+                {ITEM_CATEGORIES.map(cat => (
                   <label key={cat} className="cursor-pointer">
-                    <input type="radio" name="category" value={cat} className="peer sr-only" defaultChecked={cat === '知育・おもちゃ'} />
-                    <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm font-bold text-gray-500 peer-checked:bg-primary/10 peer-checked:text-primary-dark peer-checked:border-primary/30 hover:bg-gray-100 transition-colors">
+                    <input type="radio" name="category" value={cat} className="peer sr-only" defaultChecked={cat === ITEM_CATEGORIES[0]} />
+                    <div className="px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-stone-600 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary hover:bg-stone-100 transition-colors">
                       {cat}
                     </div>
                   </label>

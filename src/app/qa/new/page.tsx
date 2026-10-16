@@ -4,6 +4,7 @@ import { ArrowLeft, MessageCircle, Info } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import { createQuestion } from "@/app/actions/qa";
+import { QA_CATEGORIES } from "@/lib/constants";
 
 export default function NewQAPage() {
   const [state, formAction, isPending] = useActionState(createQuestion, { message: "", errors: {} });
@@ -32,9 +33,9 @@ export default function NewQAPage() {
           <div className="flex flex-col gap-1.5">
             <label className="font-bold text-stone-700 text-xs">カテゴリ <span className="text-primary">*</span></label>
             <div className="flex flex-wrap gap-1.5">
-              {['寝かしつけ', '離乳食・食事', 'イヤイヤ期', '知育・おもちゃ', '時短・家事', '保育園・幼稚園', 'その他'].map(cat => (
+              {QA_CATEGORIES.map(cat => (
                 <label key={cat} className="cursor-pointer">
-                  <input type="radio" name="category" value={cat} className="peer sr-only" defaultChecked={cat === '寝かしつけ'} />
+                  <input type="radio" name="category" value={cat} className="peer sr-only" defaultChecked={cat === QA_CATEGORIES[0]} />
                   <div className="px-3.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-stone-600 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary hover:bg-stone-100 transition-all">
                     {cat}
                   </div>

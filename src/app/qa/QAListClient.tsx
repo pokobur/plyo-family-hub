@@ -2,22 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Heart, MessageSquare, ChevronRight, X } from "lucide-react";
+import { Search, Heart, MessageSquare, X } from "lucide-react";
+import { QA_CATEGORIES } from "@/lib/constants";
+import type { Question } from "@/types";
 
 interface QAListClientProps {
-  initialQuestions: any[];
+  initialQuestions: Question[];
 }
 
-const CATEGORIES = [
-  "すべて",
-  "寝かしつけ",
-  "離乳食・食事",
-  "イヤイヤ期",
-  "知育・おもちゃ",
-  "時短・家事",
-  "保育園・幼稚園",
-  "その他",
-];
+const CATEGORIES = ["すべて", ...QA_CATEGORIES];
 
 export default function QAListClient({ initialQuestions }: QAListClientProps) {
   const [searchKeyword, setSearchKeyword] = useState("");

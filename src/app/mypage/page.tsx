@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { User, MessageCircle, Heart, Gift, ArrowRight, Clock, Plus, ChevronRight } from "lucide-react";
+import { MessageCircle, Heart, Gift, Plus, ChevronRight, MessageSquare } from "lucide-react";
+import { FALLBACK_IMAGES } from "@/lib/constants";
 
 export const revalidate = 0;
 
@@ -13,33 +14,33 @@ export default async function MyPage() {
     redirect("/login?next=/mypage");
   }
 
-  // Fetch user's questions
-  const { data: myQuestions } = await supabase
-    .from("questions")
-    .select("id, title, category, created_at, likes, answers(count)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  // Fetch user's items
-  const { data: myItems } = await supabase
-    .from("items")
-    .select("id, title, category, platform, rating, likes, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  // Fetch user's gifts
-  const { data: myGifts } = await supabase
-    .from("gift_items")
-    .select("id, title, category, status, delivery_method, created_at, images")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  // Fetch user's gift applications
-  const { data: myApplications } = await supabase
-    .from("gift_applications")
-    .select("id, status, created_at, gift_item_id, gift_items(id, title, status)")
-    .eq("applicant_id", user.id)
-    .order("created_at", { ascending: false });
+  const [
+    { data: myQuestions },
+    { data: myItems },
+    { data: myGifts },
+    { data: myApplications },
+  ] = await Promise.all([
+    supabase
+      .from("questions")
+      .select("id, title, category, created_at, likes, answers(count)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("items")
+      .select("id, title, category, platform, rating, likes, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("gift_items")
+      .select("id, title, category, status, delivery_method, created_at, images")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("gift_applications")
+      .select("id, status, created_at, gift_item_id, gift_items(id, title, status, selected_receiver_id)")
+      .eq("applicant_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const nickname = user.user_metadata?.nickname || user.email?.split("@")[0] || "ファミリーメンバー";
 
@@ -186,15 +187,14 @@ export default async function MyPage() {
               </div>
             ) : (
               myGifts.map((gift: any) => (
-                <Link
+                <div
                   key={gift.id}
-                  href={`/gifts/${gift.id}`}
-                  className="bg-white p-3.5 rounded-xl border border-stone-200 hover:border-primary/40 hover-lift transition-all shadow-2xs flex items-center justify-between gap-3 group"
+                  className="bg-white p-3.5 rounded-xl border border-stone-200 hover:border-primary/40 transition-all shadow-2xs flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <Link href={`/gifts/${gift.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
                       <img 
-                        src={gift.images?.[0] || "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"} 
+                        src={gift.images?.[0] || FALLBACK_IMAGES.GIFT} 
                         alt={gift.title} 
                         className="w-full h-full object-cover" 
                       />
@@ -207,18 +207,28 @@ export default async function MyPage() {
                         {new Date(gift.created_at).toLocaleDateString('ja-JP')}
                       </span>
                     </div>
-                  </div>
+                  </Link>
 
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
-                    gift.status === 'open' 
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                      : gift.status === 'matched' 
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                        : 'bg-stone-100 text-stone-600'
-                  }`}>
-                    {gift.status === 'open' ? '受付中' : gift.status === 'matched' ? '交渉中' : '取引完了'}
-                  </span>
-                </Link>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {(gift.status === 'matched' || gift.status === 'completed') && (
+                      <Link
+                        href={`/gifts/${gift.id}/chat`}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1"
+                      >
+                        <MessageSquare size={11} /> チャット
+                      </Link>
+                    )}
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      gift.status === 'open' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                        : gift.status === 'matched' 
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                          : 'bg-stone-100 text-stone-600'
+                    }`}>
+                      {gift.status === 'open' ? '受付中' : gift.status === 'matched' ? '交渉中' : '取引完了'}
+                    </span>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -231,30 +241,51 @@ export default async function MyPage() {
                 応募履歴はありません。
               </div>
             ) : (
-              myApplications.map((app: any) => (
-                <Link
-                  key={app.id}
-                  href={`/gifts/${app.gift_item_id}`}
-                  className="bg-white p-3.5 rounded-xl border border-stone-200 hover:border-primary/40 hover-lift transition-all shadow-2xs flex items-center justify-between gap-3 group"
-                >
-                  <div className="min-w-0">
-                    <h4 className="font-bold text-xs text-stone-800 truncate group-hover:text-primary transition-colors">
-                      {app.gift_items?.title || "お譲りアイテム"}
-                    </h4>
-                    <span className="text-[10px] text-stone-400">
-                      応募日時: {new Date(app.created_at).toLocaleDateString('ja-JP')}
-                    </span>
-                  </div>
+              myApplications.map((app: any) => {
+                const giftItem = app.gift_items;
+                const isAccepted = app.status === 'accepted' || giftItem?.selected_receiver_id === user.id;
+                const isRejected = !isAccepted && (app.status === 'rejected' || (giftItem && giftItem.status !== 'open'));
 
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
-                    app.status === 'accepted' 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                      : 'bg-stone-100 text-stone-600'
-                  }`}>
-                    {app.status === 'accepted' ? 'マッチング成立 🎉' : '応募中'}
-                  </span>
-                </Link>
-              ))
+                return (
+                  <div
+                    key={app.id}
+                    className="bg-white p-3.5 rounded-xl border border-stone-200 hover:border-primary/40 transition-all shadow-2xs flex items-center justify-between gap-3"
+                  >
+                    <Link href={`/gifts/${app.gift_item_id}`} className="min-w-0 flex-1 group">
+                      <h4 className="font-bold text-xs text-stone-800 truncate group-hover:text-primary transition-colors">
+                        {giftItem?.title || "お譲りアイテム"}
+                      </h4>
+                      <span className="text-[10px] text-stone-400">
+                        応募日: {new Date(app.created_at).toLocaleDateString('ja-JP')}
+                      </span>
+                    </Link>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isAccepted && (
+                        <Link
+                          href={`/gifts/${app.gift_item_id}/chat`}
+                          className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1"
+                        >
+                          <MessageSquare size={11} /> 取引チャット
+                        </Link>
+                      )}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        isAccepted
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          : isRejected
+                            ? 'bg-stone-100 text-stone-400'
+                            : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }`}>
+                        {isAccepted
+                          ? 'マッチング成立 🎉'
+                          : isRejected
+                            ? '他の方に決定'
+                            : '応募中'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </section>

@@ -3,13 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Search, MapPin, Award, X } from "lucide-react";
+import { GIFT_CATEGORIES, GIFT_CONDITIONS, FALLBACK_IMAGES } from "@/lib/constants";
+import type { GiftItem } from "@/types";
 
 interface GiftListClientProps {
-  initialItems: any[];
+  initialItems: GiftItem[];
 }
-
-const CATEGORIES = ['衣類', 'おもちゃ', 'ベビーカー・バギー', 'ベビーベッド・寝具', '抱っこひも・おんぶ紐', 'お食事用品', 'その他'];
-const CONDITIONS = ['新品同様', '目立った傷や汚れなし', 'やや傷や汚れあり', '使用感あり'];
 
 export default function GiftListClient({ initialItems }: GiftListClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,7 +86,7 @@ export default function GiftListClient({ initialItems }: GiftListClientProps) {
               className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-9 pr-4 py-2.5 text-xs sm:text-sm text-stone-700 outline-none focus:border-primary focus:bg-white transition-all font-medium appearance-none cursor-pointer"
             >
               <option value="">商品の状態 (すべて)</option>
-              {CONDITIONS.map(cond => (
+              {GIFT_CONDITIONS.map(cond => (
                 <option key={cond} value={cond}>{cond}</option>
               ))}
             </select>
@@ -107,7 +106,7 @@ export default function GiftListClient({ initialItems }: GiftListClientProps) {
           >
             すべて
           </button>
-          {CATEGORIES.map(cat => (
+          {GIFT_CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -157,7 +156,7 @@ export default function GiftListClient({ initialItems }: GiftListClientProps) {
           {filteredItems.map(item => {
             const firstImage = item.images && item.images.length > 0
               ? item.images[0]
-              : "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80";
+              : FALLBACK_IMAGES.GIFT;
 
             return (
               <Link

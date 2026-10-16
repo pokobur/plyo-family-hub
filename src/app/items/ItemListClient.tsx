@@ -2,23 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Heart, Star, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import AffiliateProductCard from "@/components/shared/AffiliateProductCard";
+import { ITEM_CATEGORIES, FALLBACK_IMAGES } from "@/lib/constants";
+import type { RecommendedItem } from "@/types";
 
 interface ItemListClientProps {
-  initialItems: any[];
+  initialItems: RecommendedItem[];
 }
 
-const CATEGORIES = [
-  "すべて",
-  "知育・おもちゃ",
-  "時短・家事",
-  "寝かしつけ",
-  "お出かけ",
-  "離乳食・食事",
-  "マタニティ",
-  "その他",
-];
+const CATEGORIES = ["すべて", ...ITEM_CATEGORIES];
 
 export default function ItemListClient({ initialItems }: ItemListClientProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -197,7 +190,7 @@ export default function ItemListClient({ initialItems }: ItemListClientProps) {
               <AffiliateProductCard
                 title={item.title}
                 description={item.description}
-                imageUrl={item.image_url || "https://images.unsplash.com/photo-1584824486516-0555a07fc511?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"}
+                imageUrl={item.image_url || FALLBACK_IMAGES.ITEM}
                 platform={item.platform as "Amazon" | "楽天" | "plyo.blog"}
                 url={item.affiliate_url || item.original_url}
                 rating={item.rating}

@@ -252,14 +252,14 @@ export default function SettingsButton() {
                     <span>plyo.blog（子育て専門メディア）</span>
                     <ChevronRight size={14} className="text-stone-400" />
                   </a>
-                  <Link
-                    href="/games"
+                  <a
+                    href="https://game.plyo.blog"
                     onClick={() => setIsOpen(false)}
                     className="p-3.5 flex items-center justify-between text-xs font-bold text-stone-700 hover:bg-stone-50 transition-colors"
                   >
-                    <span>子供とあそぶ知育ゲーム一覧</span>
+                    <span>子供とあそぶ知育ゲーム（game.plyo.blog）</span>
                     <ChevronRight size={14} className="text-stone-400" />
-                  </Link>
+                  </a>
                 </div>
               </div>
 

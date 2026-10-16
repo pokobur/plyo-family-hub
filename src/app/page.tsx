@@ -1,18 +1,22 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight, Gamepad2, Star, MessageCircle, Heart, Gift, Sparkles, BookOpen } from "lucide-react";
+import { ArrowRight, ChevronRight, Gamepad2, Star, MessageCircle, Heart, Gift, Sparkles, BookOpen, ExternalLink } from "lucide-react";
 import { getQuestions } from "@/app/actions/qa";
 import { getItems } from "@/app/actions/items";
 import { getGiftItems } from "@/app/actions/gifts";
 import AffiliateProductCard from "@/components/shared/AffiliateProductCard";
+import { EXTERNAL_LINKS, FALLBACK_IMAGES } from "@/lib/constants";
+import type { Question, RecommendedItem, GiftItem } from "@/types";
 
 export default async function Home() {
-  const allQuestions = await getQuestions();
-  const allItems = await getItems();
-  const allGifts = await getGiftItems();
+  const [allQuestions, allItems, allGifts] = await Promise.all([
+    getQuestions(),
+    getItems(),
+    getGiftItems(),
+  ]);
 
-  const recentQuestions = allQuestions.slice(0, 4);
-  const recentItems = allItems.slice(0, 2);
-  const recentGifts = allGifts.filter((item: any) => item.status === 'open').slice(0, 3);
+  const recentQuestions = (allQuestions as Question[]).slice(0, 4);
+  const recentItems = (allItems as RecommendedItem[]).slice(0, 2);
+  const recentGifts = (allGifts as GiftItem[]).filter((item) => item.status === 'open').slice(0, 3);
 
   return (
     <div className="flex flex-col gap-10 pb-12">
@@ -137,10 +141,10 @@ export default async function Home() {
                   受付中のお譲りアイテムはありません。
                 </div>
               ) : (
-                recentGifts.map((item: any) => {
+                recentGifts.map((item) => {
                   const firstImage = item.images && item.images.length > 0
                     ? item.images[0]
-                    : "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80";
+                    : FALLBACK_IMAGES.GIFT;
 
                   return (
                     <Link 
@@ -199,8 +203,8 @@ export default async function Home() {
                     <AffiliateProductCard 
                       title={item.title}
                       description={item.description}
-                      imageUrl={item.image_url || "https://images.unsplash.com/photo-1584824486516-0555a07fc511?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"}
-                      platform={item.platform as "Amazon" | "楽天" | "plyo.blog"}
+                      imageUrl={item.image_url || FALLBACK_IMAGES.ITEM}
+                      platform={item.platform}
                       url={item.affiliate_url || item.original_url}
                       rating={item.rating}
                     />
@@ -218,7 +222,29 @@ export default async function Home() {
             </Link>
           </section>
 
-          {/* Games Section */}
+          {/* Gift Board Feature Card */}
+          <Link 
+            href="/gifts" 
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#f8f3ec] to-[#f1e7dc] p-5 border border-stone-200/90 hover:border-secondary/50 hover-lift block shadow-2xs"
+          >
+            <div className="relative z-10 flex flex-col gap-2">
+              <div className="inline-flex items-center gap-1.5 text-secondary-dark text-[11px] font-bold bg-white/80 px-2.5 py-0.5 rounded-full w-fit border border-stone-200/60">
+                <Gift size={12} className="text-secondary" />
+                <span>お譲り合いコミュニティ</span>
+              </div>
+              <h3 className="font-bold text-base text-stone-900 leading-snug mt-0.5 group-hover:text-primary transition-colors">
+                おさがり・お譲りボード
+              </h3>
+              <p className="text-stone-600 text-xs leading-relaxed">
+                サイズアウトした子供服やベビー用品を、地域のパパママへ無料でバトンタッチしませんか？
+              </p>
+              <div className="flex items-center gap-1 font-bold text-xs text-primary group-hover:gap-1.5 transition-all mt-1">
+                お譲りボードを見る <ArrowRight size={14} />
+              </div>
+            </div>
+          </Link>
+
+          {/* Games Section (Direct Portal Links) */}
           <section className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex flex-col gap-3">
             <div>
               <h2 className="text-base font-bold text-stone-900 flex items-center gap-2">
@@ -229,39 +255,45 @@ export default async function Home() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Link 
-                href="/games/aizukan" 
+              <a 
+                href={EXTERNAL_LINKS.GAMES.AIZUKAN}
                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 transition-colors border border-transparent hover:border-stone-100 group"
               >
                 <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center text-lg shrink-0">
                   📖
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h4 className="font-bold text-xs text-stone-800 group-hover:text-primary transition-colors">AI図鑑</h4>
                   <p className="text-[11px] text-stone-400 truncate">オリジナル図鑑をつくろう</p>
                 </div>
-              </Link>
-              <Link 
-                href="/games/battleship" 
+                <ExternalLink size={12} className="text-stone-300 group-hover:text-primary shrink-0" />
+              </a>
+              <a 
+                href={EXTERNAL_LINKS.GAMES.BATTLESHIP}
                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 transition-colors border border-transparent hover:border-stone-100 group"
               >
                 <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center text-lg shrink-0">
                   🚢
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h4 className="font-bold text-xs text-stone-800 group-hover:text-primary transition-colors">戦艦スタディRPG</h4>
                   <p className="text-[11px] text-stone-400 truncate">クイズで戦艦をパワーアップ</p>
                 </div>
-              </Link>
+                <ExternalLink size={12} className="text-stone-300 group-hover:text-primary shrink-0" />
+              </a>
             </div>
-            <Link href="/games" className="text-center pt-2 border-t border-stone-100 text-xs font-bold text-primary hover:underline">
-              すべてのゲームを見る
-            </Link>
+            <a 
+              href={EXTERNAL_LINKS.GAMES_PORTAL} 
+              className="flex items-center justify-center gap-1 pt-2 border-t border-stone-100 text-xs font-bold text-primary hover:underline"
+            >
+              <span>game.plyo.blog ポータルへ</span>
+              <ExternalLink size={12} />
+            </a>
           </section>
 
           {/* plyo.blog Link Banner Card */}
           <a 
-            href="https://plyo.blog" 
+            href={EXTERNAL_LINKS.BLOG} 
             target="_blank" 
             rel="noopener noreferrer"
             className="group relative overflow-hidden rounded-2xl bg-stone-900 p-5 text-white hover-lift block shadow-xs"

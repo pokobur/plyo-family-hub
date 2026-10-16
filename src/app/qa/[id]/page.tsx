@@ -2,14 +2,21 @@ import { MessageCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getQuestion } from "@/app/actions/qa";
 import { checkUserLiked } from "@/app/actions/likes";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ShareButton from "@/components/shared/ShareButton";
 import AnswerForm from "@/components/qa/AnswerForm";
+import BestAnswerButton from "@/components/qa/BestAnswerButton";
 import LikeButton from "@/components/shared/LikeButton";
+import type { Answer } from "@/types";
 
 export default async function QADetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const data = await getQuestion(resolvedParams.id);
+  const supabase = await createClient();
+  const [data, { data: { user } }] = await Promise.all([
+    getQuestion(resolvedParams.id),
+    supabase.auth.getUser(),
+  ]);
 
   if (!data || !data.question) {
     notFound();
@@ -17,6 +24,7 @@ export default async function QADetailPage({ params }: { params: Promise<{ id: s
 
   const { question, answers } = data;
   const isLiked = await checkUserLiked(question.id, 'question');
+  const isQuestionOwner = Boolean(user && question.user_id && user.id === question.user_id);
 
   const date = new Date(question.created_at);
   const formattedDate = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -89,7 +97,7 @@ export default async function QADetailPage({ params }: { params: Promise<{ id: s
               まだ回答がありません。最初の回答者になりませんか？
             </div>
           ) : (
-            answers.map((answer: any) => {
+            answers.map((answer: Answer) => {
               const ansDate = new Date(answer.created_at);
               const formattedAnsDate = `${ansDate.getFullYear()}/${ansDate.getMonth() + 1}/${ansDate.getDate()} ${ansDate.getHours()}:${String(ansDate.getMinutes()).padStart(2, '0')}`;
 
@@ -117,6 +125,13 @@ export default async function QADetailPage({ params }: { params: Promise<{ id: s
                         <span className="text-[10px] text-stone-400 font-medium">{formattedAnsDate}</span>
                       </div>
                     </div>
+                    {isQuestionOwner && (
+                      <BestAnswerButton
+                        questionId={question.id}
+                        answerId={answer.id}
+                        isBest={Boolean(answer.is_best)}
+                      />
+                    )}
                   </div>
                   <p className="text-stone-700 leading-relaxed text-sm whitespace-pre-wrap">
                     {answer.body}

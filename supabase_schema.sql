@@ -58,9 +58,12 @@ create policy "Allow authenticated insert access on questions" on public.questio
 create policy "Allow authenticated insert access on answers" on public.answers for insert with check (auth.role() = 'authenticated');
 create policy "Allow authenticated insert access on items" on public.items for insert with check (auth.role() = 'authenticated');
 
--- Allow only owners to update or delete their entries
+-- Allow owners (and question owners for best answer selection) to update or delete their entries
 create policy "Allow owner update access on questions" on public.questions for update using (auth.uid() = user_id);
-create policy "Allow owner update access on answers" on public.answers for update using (auth.uid() = user_id);
+create policy "Allow owner or question author update access on answers" on public.answers for update using (
+  auth.uid() = user_id or
+  auth.uid() in (select user_id from public.questions where id = question_id)
+);
 create policy "Allow owner update access on items" on public.items for update using (auth.uid() = user_id);
 
 create policy "Allow owner delete access on questions" on public.questions for delete using (auth.uid() = user_id);
@@ -112,20 +115,25 @@ alter table public.gift_items enable row level security;
 alter table public.gift_applications enable row level security;
 alter table public.gift_messages enable row level security;
 
--- 4-4. gift_items RLS Policies
+-- 4-4. gift_items RLS Policies (Allow owner and matched receiver to update status)
 create policy "Allow public read access on gift_items" on public.gift_items for select using (true);
 create policy "Allow auth insert on gift_items" on public.gift_items for insert with check (auth.role() = 'authenticated');
-create policy "Allow owner update on gift_items" on public.gift_items for update using (auth.uid() = user_id);
+create policy "Allow owner or matched receiver update on gift_items" on public.gift_items for update using (
+  auth.uid() = user_id or auth.uid() = selected_receiver_id
+);
 create policy "Allow owner delete on gift_items" on public.gift_items for delete using (auth.uid() = user_id);
 
--- 4-5. gift_applications RLS Policies
+-- 4-5. gift_applications RLS Policies (Allow item owner to update application status when selecting receiver)
 create policy "Allow owner or applicant read on gift_applications" on public.gift_applications for select 
 using (
   auth.uid() = applicant_id or 
   auth.uid() in (select user_id from public.gift_items where id = gift_item_id)
 );
 create policy "Allow auth insert on gift_applications" on public.gift_applications for insert with check (auth.role() = 'authenticated');
-create policy "Allow applicant update on gift_applications" on public.gift_applications for update using (auth.uid() = applicant_id);
+create policy "Allow applicant or item owner update on gift_applications" on public.gift_applications for update using (
+  auth.uid() = applicant_id or
+  auth.uid() in (select user_id from public.gift_items where id = gift_item_id)
+);
 create policy "Allow applicant delete on gift_applications" on public.gift_applications for delete using (auth.uid() = applicant_id);
 
 -- 4-6. gift_messages RLS Policies
@@ -189,7 +197,7 @@ create policy "Allow public read access on profiles" on public.profiles for sele
 create policy "Allow users to update own profile" on public.profiles for update using (auth.uid() = id);
 create policy "Allow users to insert own profile" on public.profiles for insert with check (auth.uid() = id);
 
--- 7. Likes Tables (Robust 1-like-per-user design)
+-- 7. Likes Tables (Robust 1-like-per-user design with SECURITY DEFINER triggers to bypass owner-only UPDATE RLS)
 create table if not exists public.question_likes (
   id uuid default uuid_generate_v4() primary key,
   question_id uuid references public.questions(id) on delete cascade not null,
@@ -217,4 +225,45 @@ create policy "Allow public read on item_likes" on public.item_likes for select 
 create policy "Allow auth user insert on item_likes" on public.item_likes for insert with check (auth.uid() = user_id);
 create policy "Allow auth user delete own item_likes" on public.item_likes for delete using (auth.uid() = user_id);
 
+-- Trigger functions to automatically sync like counts on parent tables regardless of who liked
+create or replace function public.sync_question_likes_count()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_question_id uuid;
+begin
+  target_question_id := coalesce(new.question_id, old.question_id);
+  update public.questions
+  set likes = (select count(*) from public.question_likes where question_id = target_question_id)
+  where id = target_question_id;
+  return null;
+end;
+$$;
 
+drop trigger if exists trg_sync_question_likes on public.question_likes;
+create trigger trg_sync_question_likes
+after insert or delete on public.question_likes
+for each row execute function public.sync_question_likes_count();
+
+create or replace function public.sync_item_likes_count()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_item_id uuid;
+begin
+  target_item_id := coalesce(new.item_id, old.item_id);
+  update public.items
+  set likes = (select count(*) from public.item_likes where item_id = target_item_id)
+  where id = target_item_id;
+  return null;
+end;
+$$;
+
+drop trigger if exists trg_sync_item_likes on public.item_likes;
+create trigger trg_sync_item_likes
+after insert or delete on public.item_likes
+for each row execute function public.sync_item_likes_count();

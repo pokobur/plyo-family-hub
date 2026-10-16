@@ -84,6 +84,8 @@ export async function createGiftItem(prevState: unknown, formData: FormData) {
   // Invalidate cache
   revalidateTag('gift_items', 'max')
   revalidatePath('/gifts')
+  revalidatePath('/')
+  revalidatePath('/mypage')
 
   redirect(`/gifts/${data.id}`)
 }
@@ -100,15 +102,23 @@ export async function applyForGift(giftItemId: string, message: string) {
     throw new Error('メッセージは5文字以上入力してください。')
   }
 
-  // Verify not applying to own item
+  // Verify item exists, is open, and user is not applying to own item
   const { data: item } = await supabase
     .from('gift_items')
-    .select('user_id')
+    .select('user_id, status')
     .eq('id', giftItemId)
     .single()
 
-  if (item && item.user_id === user.id) {
+  if (!item) {
+    throw new Error('対象のアイテムが見つかりませんでした。')
+  }
+
+  if (item.user_id === user.id) {
     throw new Error('自身が出品したアイテムには応募できません。')
+  }
+
+  if (item.status !== 'open') {
+    throw new Error('このアイテムは現在募集を終了しています。')
   }
 
   const { error } = await supabase
@@ -123,13 +133,14 @@ export async function applyForGift(giftItemId: string, message: string) {
   if (error) {
     console.error('Failed to apply for gift:', error)
     if (error.code === '23505') {
-      throw new Error('このアイテムには既に評価・応募済みです。')
+      throw new Error('このアイテムには既に応募済みです。')
     }
     throw new Error('応募に失敗しました。時間をおいて再度お試しください。')
   }
 
   revalidateTag(`gift_item-${giftItemId}`, 'max')
   revalidatePath(`/gifts/${giftItemId}`)
+  revalidatePath('/mypage')
 }
 
 export async function confirmReceiver(giftItemId: string, applicantId: string) {
@@ -159,7 +170,7 @@ export async function confirmReceiver(giftItemId: string, applicantId: string) {
     throw new Error('このアイテムは既に交渉中または取引完了となっています。')
   }
 
-  // Transaction: Update status of application to accepted, and update item status to matched
+  // Update item status to matched
   const { error: updateItemError } = await supabase
     .from('gift_items')
     .update({
@@ -173,17 +184,27 @@ export async function confirmReceiver(giftItemId: string, applicantId: string) {
     throw new Error('取引の開始に失敗しました。')
   }
 
+  // Update selected applicant status to accepted, and others to rejected
   await supabase
     .from('gift_applications')
     .update({ status: 'accepted' })
     .eq('gift_item_id', giftItemId)
     .eq('applicant_id', applicantId)
 
+  await supabase
+    .from('gift_applications')
+    .update({ status: 'rejected' })
+    .eq('gift_item_id', giftItemId)
+    .neq('applicant_id', applicantId)
+
   // Revalidate cache
   revalidateTag('gift_items', 'max')
   revalidateTag(`gift_item-${giftItemId}`, 'max')
   revalidatePath(`/gifts/${giftItemId}`)
   revalidatePath(`/gifts/${giftItemId}/chat`)
+  revalidatePath('/gifts')
+  revalidatePath('/')
+  revalidatePath('/mypage')
 }
 
 export async function sendGiftMessage(giftItemId: string, text: string) {
@@ -253,7 +274,7 @@ export async function completeGiftTransaction(giftItemId: string) {
     throw new Error('アイテムが見つかりませんでした。')
   }
 
-  // Either owner or recipient can trigger completion, or both
+  // Either owner or recipient can trigger completion
   if (item.user_id !== user.id && item.selected_receiver_id !== user.id) {
     throw new Error('この取引を完了する権限がありません。')
   }
@@ -272,6 +293,9 @@ export async function completeGiftTransaction(giftItemId: string) {
   revalidateTag(`gift_item-${giftItemId}`, 'max')
   revalidatePath(`/gifts/${giftItemId}`)
   revalidatePath(`/gifts/${giftItemId}/chat`)
+  revalidatePath('/gifts')
+  revalidatePath('/')
+  revalidatePath('/mypage')
 }
 
 // Caching helper actions
@@ -300,7 +324,6 @@ export async function getGiftItem(id: string) {
     async () => {
       const supabase = createReadClient()
       
-      // Fetch item
       const { data: item, error: itemError } = await supabase
         .from('gift_items')
         .select('*')

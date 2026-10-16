@@ -2,22 +2,11 @@
 
 import { useActionState, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Gift, Image, Plus, Trash, Loader2 } from "lucide-react";
+import { ArrowLeft, Gift, Image, Trash, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { createGiftItem } from "@/app/actions/gifts";
-
-const CATEGORIES = ['衣類', 'おもちゃ', 'ベビーカー・バギー', 'ベビーベッド・寝具', '抱っこひも・おんぶ紐', 'お食事用品', 'その他'];
-const CONDITIONS = ['新品同様', '目立った傷や汚れなし', 'やや傷や汚れあり', '使用感あり'];
-const PREFECTURES = [
-  "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
-  "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
-  "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
-  "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
-  "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
-  "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
-  "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
-];
+import { GIFT_CATEGORIES, GIFT_CONDITIONS, PREFECTURES } from "@/lib/constants";
 
 export default function NewGiftPage() {
   const router = useRouter();
@@ -149,9 +138,9 @@ export default function NewGiftPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      <Link href="/gifts" className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors w-fit font-bold">
-        <ArrowLeft size={16} /> アイテム一覧に戻る
+    <div className="max-w-2xl mx-auto flex flex-col gap-6 pb-12">
+      <Link href="/gifts" className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors w-fit">
+        <ArrowLeft size={15} /> アイテム一覧に戻る
       </Link>
 
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs">
@@ -168,12 +157,12 @@ export default function NewGiftPage() {
         <form onSubmit={handleFormSubmit} className="flex flex-col gap-6">
           {/* Title */}
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-gray-700 text-sm">商品名 <span className="text-red-500">*</span></label>
+            <label className="font-bold text-stone-700 text-xs">商品名 <span className="text-primary">*</span></label>
             <input
               type="text"
               name="title"
               placeholder="例: ベビービョルン バウンサー ブリス（メッシュ）"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-800 outline-none focus:border-primary focus:bg-white transition-all font-medium text-sm"
               required
             />
             {state?.errors?.title && <p className="text-red-500 text-xs font-bold">{state.errors.title[0]}</p>}
@@ -181,12 +170,12 @@ export default function NewGiftPage() {
 
           {/* Description */}
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-gray-700 text-sm">商品説明・お譲り条件 <span className="text-red-500">*</span></label>
+            <label className="font-bold text-stone-700 text-xs">商品説明・お譲り条件 <span className="text-primary">*</span></label>
             <textarea
               name="description"
               placeholder="商品の状態や使用期間、付属品の有無、手渡しの場合の条件（平日18時以降希望など）を詳しくご記入ください。"
               rows={5}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y font-medium text-sm"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-stone-800 outline-none focus:border-primary focus:bg-white transition-all resize-y font-medium text-sm"
               required
             ></textarea>
             {state?.errors?.description && <p className="text-red-500 text-xs font-bold">{state.errors.description[0]}</p>}
@@ -194,11 +183,11 @@ export default function NewGiftPage() {
 
           {/* Image Upload Area */}
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-gray-700 text-sm">商品画像（最大4枚まで）</label>
+            <label className="font-bold text-stone-700 text-xs">商品画像（最大4枚まで）</label>
             
             <div className="grid grid-cols-4 gap-4 mt-1">
               {previews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-xl border border-gray-200 overflow-hidden bg-gray-50 group">
+                <div key={index} className="relative aspect-square rounded-xl border border-stone-200 overflow-hidden bg-stone-50 group">
                   <img src={preview} alt={`選択画像-${index}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
@@ -211,9 +200,9 @@ export default function NewGiftPage() {
               ))}
 
               {previews.length < 4 && (
-                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-primary transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer bg-gray-50/50 hover:bg-primary/5">
-                  <Image size={24} className="text-gray-400" />
-                  <span className="text-[10px] text-gray-400 font-bold">画像を追加</span>
+                <label className="aspect-square rounded-xl border-2 border-dashed border-stone-200 hover:border-primary transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer bg-stone-50/50 hover:bg-primary/5">
+                  <Image size={24} className="text-stone-400" />
+                  <span className="text-[10px] text-stone-400 font-bold">画像を追加</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -224,20 +213,20 @@ export default function NewGiftPage() {
                 </label>
               )}
             </div>
-            <p className="text-[10px] text-gray-400 font-bold leading-normal mt-1">※ 実物の状態がわかる写真をアップロードしてください（任意ですが、写真があると譲り先が見つかりやすくなります）。</p>
+            <p className="text-[10px] text-stone-400 font-medium leading-normal mt-1">※ 実物の状態がわかる写真をアップロードしてください（任意ですが、写真があると譲り先が見つかりやすくなります）。</p>
           </div>
 
           {/* Category & Condition */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-bold text-gray-700 text-sm">カテゴリ <span className="text-red-500">*</span></label>
+              <label className="font-bold text-stone-700 text-xs">カテゴリ <span className="text-primary">*</span></label>
               <select
                 name="category"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-gray-700 appearance-none cursor-pointer"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white transition-all font-medium text-stone-700 appearance-none cursor-pointer"
                 required
               >
                 <option value="">カテゴリを選択してください</option>
-                {CATEGORIES.map(cat => (
+                {GIFT_CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -245,14 +234,14 @@ export default function NewGiftPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="font-bold text-gray-700 text-sm">商品の状態 <span className="text-red-500">*</span></label>
+              <label className="font-bold text-stone-700 text-xs">商品の状態 <span className="text-primary">*</span></label>
               <select
                 name="condition"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-gray-700 appearance-none cursor-pointer"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary focus:bg-white transition-all font-medium text-stone-700 appearance-none cursor-pointer"
                 required
               >
                 <option value="">商品の状態を選択してください</option>
-                {CONDITIONS.map(cond => (
+                {GIFT_CONDITIONS.map(cond => (
                   <option key={cond} value={cond}>{cond}</option>
                 ))}
               </select>
@@ -262,7 +251,7 @@ export default function NewGiftPage() {
 
           {/* Delivery Method */}
           <div className="flex flex-col gap-2">
-            <label className="font-bold text-gray-700 text-sm">受け渡し方法 <span className="text-red-500">*</span></label>
+            <label className="font-bold text-stone-700 text-xs">受け渡し方法 <span className="text-primary">*</span></label>
             <div className="flex gap-4">
               {['手渡し', '郵送', '両方'].map(method => (
                 <label key={method} className="flex items-center gap-2 cursor-pointer">
@@ -273,7 +262,7 @@ export default function NewGiftPage() {
                     defaultChecked={method === '手渡し'}
                     className="text-primary focus:ring-primary"
                   />
-                  <span className="text-sm font-bold text-gray-700">{method === '両方' ? '手渡し・郵送どちらも可' : method}</span>
+                  <span className="text-xs sm:text-sm font-bold text-stone-700">{method === '両方' ? '手渡し・郵送どちらも可' : method}</span>
                 </label>
               ))}
             </div>
@@ -281,15 +270,15 @@ export default function NewGiftPage() {
           </div>
 
           {/* Location Area */}
-          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col gap-4">
-            <h3 className="text-xs font-black text-gray-500 uppercase tracking-wide">受け渡し場所・地域</h3>
+          <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100 flex flex-col gap-4">
+            <h3 className="text-xs font-bold text-stone-500 uppercase tracking-wide">受け渡し場所・地域</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-gray-700 text-xs">都道府県 <span className="text-red-500">*</span></label>
+                <label className="font-bold text-stone-700 text-xs">都道府県 <span className="text-primary">*</span></label>
                 <select
                   name="prefecture"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-gray-700 appearance-none cursor-pointer"
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-all font-medium text-stone-700 appearance-none cursor-pointer"
                   required
                 >
                   <option value="">都道府県を選択</option>
@@ -301,12 +290,12 @@ export default function NewGiftPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-gray-700 text-xs">市区町村 <span className="text-red-500">*</span></label>
+                <label className="font-bold text-stone-700 text-xs">市区町村 <span className="text-primary">*</span></label>
                 <input
                   type="text"
                   name="city"
                   placeholder="例: 世田谷区、横浜市港北区"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-stone-800 outline-none focus:border-primary transition-all font-medium text-sm"
                   required
                 />
                 {state?.errors?.city && <p className="text-red-500 text-xs font-bold">{state.errors.city[0]}</p>}
@@ -314,35 +303,35 @@ export default function NewGiftPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="font-bold text-gray-700 text-xs">受け渡し場所の目安・最寄り駅（任意）</label>
+              <label className="font-bold text-stone-700 text-xs">受け渡し場所の目安・最寄り駅（任意）</label>
               <input
                 type="text"
                 name="location_hint"
                 placeholder="例: 二子玉川駅付近、砧公園周辺など"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
+                className="w-full bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-stone-800 outline-none focus:border-primary transition-all font-medium text-sm"
               />
-              <p className="text-[9px] text-gray-400 font-bold">※ 正確な待ち合わせ場所や住所は、お譲り先が決定した後に非公開チャットで伝えるため、ここでは大まかな目安を入力してください。</p>
+              <p className="text-[10px] text-stone-400 font-medium">※ 正確な待ち合わせ場所や住所は、お譲り先が決定した後に非公開チャットで伝えるため、ここでは大まかな目安を入力してください。</p>
               {state?.errors?.location_hint && <p className="text-red-500 text-xs font-bold">{state.errors.location_hint[0]}</p>}
             </div>
           </div>
 
           {/* Error messages */}
           {uploadError && (
-            <div className="text-red-500 font-bold bg-red-50 p-4 rounded-xl border border-red-100 text-xs leading-relaxed">
+            <div className="text-red-600 font-bold bg-red-50 p-4 rounded-xl border border-red-100 text-xs leading-relaxed">
               {uploadError}
             </div>
           )}
-          {state?.message && <div className="text-red-500 font-bold bg-red-50 p-4 rounded-xl border border-red-100 text-sm">{state.message}</div>}
+          {state?.message && <div className="text-red-600 font-bold bg-red-50 p-4 rounded-xl border border-red-100 text-xs">{state.message}</div>}
 
           {/* Form Actions */}
-          <div className="mt-4 pt-6 border-t border-gray-100 flex items-center justify-end gap-4">
-            <Link href="/gifts" className="text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
+          <div className="mt-2 pt-5 border-t border-stone-100 flex items-center justify-end gap-4">
+            <Link href="/gifts" className="text-xs font-bold text-stone-500 hover:text-stone-700 transition-colors">
               キャンセル
             </Link>
             <button
               disabled={isPending || isUploading}
               type="submit"
-              className="bg-primary text-white font-bold px-8 py-3.5 rounded-full hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center gap-1.5 cursor-pointer"
+              className="bg-primary text-white font-bold px-6 py-2.5 rounded-xl hover:bg-primary-dark transition-all shadow-2xs hover-lift disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
             >
               {(isPending || isUploading) ? (
                 <>

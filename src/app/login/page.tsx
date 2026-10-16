@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Mail, Lock, User, LogIn, UserPlus, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { getSafeRedirectPath } from '@/lib/constants'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const nextRedirect = searchParams.get('next') || '/'
+  const nextRedirect = getSafeRedirectPath(searchParams.get('next'), '/')
 
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
@@ -43,7 +43,6 @@ function LoginForm() {
         throw signInError
       }
 
-      // Hard redirect using window.location.href to ensure cookies are refreshed and Middleware / Server Components detect the session immediately.
       window.location.href = nextRedirect
     } catch (err: any) {
       setError(err.message || 'ログイン中にエラーが発生しました。')
@@ -79,7 +78,6 @@ function LoginForm() {
         throw signUpError
       }
 
-      // Check if session exists (i.e. email confirmation is disabled)
       if (data.session) {
         window.location.href = nextRedirect
       } else {
@@ -95,63 +93,61 @@ function LoginForm() {
   }
 
   return (
-    <div className="max-w-md w-full mx-auto bg-white rounded-[2rem] border border-primary/20 shadow-xl overflow-hidden relative">
-      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-[#ff9a8b]"></div>
-      
-      <div className="p-8 md:p-10 flex flex-col gap-6">
+    <div className="max-w-md w-full mx-auto bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+      <div className="p-6 sm:p-8 flex flex-col gap-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-2xl font-black text-gray-800">
+          <h1 className="text-xl sm:text-2xl font-bold text-stone-900">
             {activeTab === 'login' ? 'メンバーログイン' : '新規ファミリー登録'}
           </h1>
-          <p className="text-xs text-gray-500 font-medium mt-1.5">
+          <p className="text-xs text-stone-500 font-medium mt-1.5 leading-relaxed">
             {activeTab === 'login' 
-              ? '知恵袋への回答や、おすすめアイテムの投稿にはログインが必要です。' 
+              ? '知恵袋への質問・回答や、おすすめアイテム・お譲りの投稿にはログインが必要です。' 
               : 'family-hug（ファミリーハグ）に登録して、みんなと子育てを支え合いましょう！'}
           </p>
         </div>
 
         {/* Tab Selection */}
-        <div className="grid grid-cols-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
+        <div className="grid grid-cols-2 bg-stone-100 p-1 rounded-xl border border-stone-200/60">
           <button
             type="button"
             onClick={() => setActiveTab('login')}
-            className={`py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'login'
-                ? 'bg-white text-primary shadow-sm border border-gray-100'
-                : 'text-gray-400 hover:text-gray-600'
+                ? 'bg-white text-stone-900 shadow-2xs'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
-            <LogIn size={16} />
+            <LogIn size={15} className={activeTab === 'login' ? 'text-primary' : ''} />
             ログイン
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('signup')}
-            className={`py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'signup'
-                ? 'bg-white text-primary shadow-sm border border-gray-100'
-                : 'text-gray-400 hover:text-gray-600'
+                ? 'bg-white text-stone-900 shadow-2xs'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
-            <UserPlus size={16} />
+            <UserPlus size={15} className={activeTab === 'signup' ? 'text-primary' : ''} />
             新規登録
           </button>
         </div>
 
         {/* Status Messages */}
         {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 text-xs font-bold leading-relaxed">
+          <div className="bg-red-50 text-red-700 p-3.5 rounded-xl border border-red-100 text-xs font-bold leading-relaxed">
             {error}
           </div>
         )}
 
         {successMessage ? (
-          <div className="bg-green-50 text-green-800 p-6 rounded-2xl border border-green-100 flex flex-col items-center text-center gap-3">
-            <CheckCircle2 size={36} className="text-green-500" />
+          <div className="bg-emerald-50 text-emerald-800 p-6 rounded-xl border border-emerald-100 flex flex-col items-center text-center gap-3">
+            <CheckCircle2 size={32} className="text-emerald-600" />
             <div>
               <p className="text-sm font-bold">{successMessage}</p>
-              <p className="text-xs font-medium text-green-700/80 mt-2">
+              <p className="text-xs font-medium text-emerald-700/80 mt-2 leading-relaxed">
                 ※メールが届かない場合は、迷惑メールフォルダをご確認いただくか、入力したメールアドレスが正しいか再度お確かめください。
               </p>
             </div>
@@ -166,7 +162,7 @@ function LoginForm() {
             
             {activeTab === 'signup' && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-gray-700">ニックネーム (投稿者名)</label>
+                <label className="text-xs font-bold text-stone-700">ニックネーム (投稿者名)</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -175,15 +171,15 @@ function LoginForm() {
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder="例: たろうパパ、はなママ"
                     autoComplete="off"
-                    className="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-800 text-sm outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-10 pr-4 py-2.5 text-stone-800 text-sm outline-none focus:bg-white focus:border-primary transition-all font-medium"
                   />
-                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
                 </div>
               </div>
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700">メールアドレス</label>
+              <label className="text-xs font-bold text-stone-700">メールアドレス</label>
               <div className="relative">
                 <input
                   type="email"
@@ -192,14 +188,14 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   autoComplete="off"
-                  className="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-800 text-sm outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-10 pr-4 py-2.5 text-stone-800 text-sm outline-none focus:bg-white focus:border-primary transition-all font-medium"
                 />
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700">パスワード</label>
+              <label className="text-xs font-bold text-stone-700">パスワード（6文字以上）</label>
               <div className="relative">
                 <input
                   type="password"
@@ -209,16 +205,16 @@ function LoginForm() {
                   placeholder="••••••••"
                   minLength={6}
                   autoComplete="new-password"
-                  className="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-800 text-sm outline-none focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-10 pr-4 py-2.5 text-stone-800 text-sm outline-none focus:bg-white focus:border-primary transition-all font-medium"
                 />
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="bg-primary text-white font-bold py-3.5 rounded-xl hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2 mt-4"
+              className="bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition-colors shadow-xs disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2 mt-2 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -240,14 +236,14 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col gap-6 py-8">
-      <Link href="/" className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors w-fit font-bold self-start">
-        <ArrowLeft size={16} /> トップページに戻る
+    <div className="max-w-md mx-auto flex flex-col gap-6 py-4">
+      <Link href="/" className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-800 transition-colors w-fit font-bold">
+        <ArrowLeft size={15} /> トップページに戻る
       </Link>
 
       <Suspense fallback={
         <div className="flex justify-center items-center h-64">
-          <Loader2 size={40} className="animate-spin text-primary" />
+          <Loader2 size={32} className="animate-spin text-primary" />
         </div>
       }>
         <LoginForm />

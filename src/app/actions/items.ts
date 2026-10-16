@@ -4,6 +4,7 @@ import { createClient, createReadClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { FALLBACK_IMAGES } from '@/lib/constants'
 
 // Security: Validate inputs strictly
 const ItemFormSchema = z.object({
@@ -51,10 +52,10 @@ export async function createItem(prevState: unknown, formData: FormData) {
   let affiliate_url = original_url
 
   if (platform === 'Amazon' || original_url.includes('amazon.co.jp') || original_url.includes('amzn.to')) {
-    const moshimoAmazonId = process.env.MOSHIMO_AMAZON_ID || '1234567' // もしもアフィリエイトのAmazon用a_id
+    const moshimoAmazonId = process.env.MOSHIMO_AMAZON_ID || '1234567'
     affiliate_url = `https://af.moshimo.com/af/c/click?a_id=${moshimoAmazonId}&p_id=170&pc_id=185&pl_id=4062&url=${encodeURIComponent(original_url)}`
   } else if (platform === '楽天' || original_url.includes('rakuten.co.jp')) {
-    const moshimoRakutenId = process.env.MOSHIMO_RAKUTEN_ID || '1234567' // もしもアフィリエイトの楽天用a_id
+    const moshimoRakutenId = process.env.MOSHIMO_RAKUTEN_ID || '1234567'
     affiliate_url = `https://af.moshimo.com/af/c/click?a_id=${moshimoRakutenId}&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(original_url)}`
   }
 
@@ -86,6 +87,8 @@ export async function createItem(prevState: unknown, formData: FormData) {
   // Invalidate cache
   revalidateTag('items', 'max')
   revalidatePath('/items')
+  revalidatePath('/')
+  revalidatePath('/mypage')
   
   redirect(`/items/${data.id}`)
 }
@@ -185,7 +188,7 @@ export async function searchProducts(keyword: string) {
       try {
         const decoder = new TextDecoder(charset);
         html = decoder.decode(bytes);
-      } catch (e) {
+      } catch {
         const decoder = new TextDecoder('utf-8');
         html = decoder.decode(bytes);
       }
@@ -213,10 +216,9 @@ export async function searchProducts(keyword: string) {
       );
 
       if (isAmazonBlocked || !title) {
-        console.log(`[Metadata Extraction] Amazon bot block detected or title empty. Using fallback values.`);
         return [{
           title: platform === 'Amazon' ? 'Amazonの商品' : '楽天市場の商品',
-          imageUrl: 'https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          imageUrl: FALLBACK_IMAGES.ITEM,
           url: trimmedKeyword,
           price: '',
           platform
@@ -224,7 +226,7 @@ export async function searchProducts(keyword: string) {
       }
 
       if (!imageUrl) {
-        imageUrl = "https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80";
+        imageUrl = FALLBACK_IMAGES.ITEM;
       }
 
       return [{
@@ -238,7 +240,7 @@ export async function searchProducts(keyword: string) {
       console.error('Failed to extract metadata from URL:', err);
       return [{
         title: platform === 'Amazon' ? 'Amazonの商品' : '楽天市場の商品',
-        imageUrl: 'https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+        imageUrl: FALLBACK_IMAGES.ITEM,
         url: trimmedKeyword,
         price: '',
         platform
@@ -255,14 +257,29 @@ export async function getItems() {
       const supabase = createReadClient()
       const { data, error } = await supabase
         .from('items')
+        .select('*, item_likes(count)')
+        .order('created_at', { ascending: false })
+
+      if (!error && data) {
+        return data.map((item: any) => ({
+          ...item,
+          likes: typeof item.item_likes?.[0]?.count === 'number'
+            ? Math.max(item.likes || 0, item.item_likes[0].count)
+            : (item.likes || 0),
+        }))
+      }
+
+      // Fallback if item_likes relation is not yet migrated
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('items')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching items:', error.message || error)
+      if (fallbackError) {
+        console.error('Error fetching items:', fallbackError.message || fallbackError)
         return []
       }
-      return data
+      return fallbackData || []
     },
     ['items'],
     { tags: ['items'] }
@@ -273,17 +290,33 @@ export async function getItem(id: string) {
   return unstable_cache(
     async () => {
       const supabase = createReadClient()
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('items')
-        .select('*')
+        .select('*, item_likes(count)')
         .eq('id', id)
         .single()
 
       if (error) {
+        const retry = await supabase
+          .from('items')
+          .select('*')
+          .eq('id', id)
+          .single()
+        data = retry.data
+        error = retry.error
+      }
+
+      if (error || !data) {
         console.error('Error fetching item:', error)
         return null
       }
-      return data
+
+      return {
+        ...data,
+        likes: typeof data.item_likes?.[0]?.count === 'number'
+          ? Math.max(data.likes || 0, data.item_likes[0].count)
+          : (data.likes || 0),
+      }
     },
     ['item', id],
     { tags: [`item-${id}`] }
